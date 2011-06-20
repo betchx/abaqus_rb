@@ -5,8 +5,10 @@ require 'abaqus/elset'
 module Abaqus
   class Element
     @@all = {}
+    @@maxid = 0
     def Element.clear
       @@all.clear
+      @@maxid = 0
     end
     def initialize
       raise "Abaqus::Element.new is not allowed. Use sub classes instead"
@@ -14,8 +16,13 @@ module Abaqus
 
     def assign(i,e)
       @@all[i] = e
+      @@maxid = i if @@maxid <i
     end
     private :assign
+
+    def Element.nextid
+      @@maxid + 1
+    end
 
     def Element.[](i)
       if i < 0
@@ -209,8 +216,6 @@ if $0 == __FILE__
       assert_equal(0,Abaqus::Element.size)
     end
 
-
-
     ######S4
 
     def test_S4_new_keeps_order_of_node
@@ -275,6 +280,19 @@ if $0 == __FILE__
     def test_stored_element_must_be_original_type__S4
       e = s4
       assert_equal(e, Abaqus::Element[@s4id])
+    end
+
+    def test_at_first_nextid_should_be_one
+      assert_equal(1, Abaqus::Element.nextid)
+    end
+    def test_creating_first_element_of_eid_1_changes_nextid_to_2
+      Abaqus::Element::S4.new(1, 1,2,4,3)
+      assert_equal(2, Abaqus::Element.nextid)
+    end
+    def test_creation_of_first_element_change_nextid_for_the_elements_id_plus_1
+      eid = rand(7438)
+      e = Abaqus::Element::S4.new(eid, 1, 2,4,3)
+      assert_equal(eid+1,Abaqus::Element.nextid)
     end
 
     ### S4R
