@@ -6,7 +6,8 @@ module Abaqus
     attr :x
     attr :y
     attr :z
-    @@all = []
+    @@all = Hash.new
+    @@maxid = 0
     UpperLimitID = 9999999
     def Node.[](i)
       raise RangeError,"Node Id 0 is not allowed" if i == 0
@@ -15,10 +16,10 @@ module Abaqus
       @@all[i]
     end
     def Node.add(x,y,z=0.0)
-      Node.new(@all.size,x,y,z)
+      Node.new(nextid,x,y,z)
     end
     def Node.nextid
-      @@all.size
+      @@maxid + 1
     end
     def Node.size
       @@all.size
@@ -43,9 +44,11 @@ module Abaqus
       @y = y
       @z = z
       @@all[i] = self
+      @@maxid = i if @@maxid < i
     end
     def Node.clear
       @@all.clear
+      @@maxid = 0
     end
     def Node.parse(line,io)
       # no need to parse first line
@@ -77,8 +80,8 @@ if $0 == __FILE__
     def test_none
       assert_equal(0, Abaqus::Node.size)
     end
-    def test_first_next_id_is_zero
-      assert_equal(0, Abaqus::Node.nextid)
+    def test_first_next_id_should_be_one
+      assert_equal(1, Abaqus::Node.nextid)
     end
     def test_next_id_must_be_inremented_of_max_id
       i = rand(30000)
@@ -142,7 +145,33 @@ if $0 == __FILE__
       n = Abaqus::Node.new(1,0.0,0.0,z)
       assert_in_delta(z, n.z, z*0.000001)
     end
-
   end
+
+  class TestNodeCreationWithIntervalNodeID < Test::Unit::TestCase
+    def setup
+      @n1 = Abaqus::Node.new(1, 0.1, 0.0, 0.0)
+      @n2 = Abaqus::Node.new(10, 1.0, 0.0, 0.0)
+    end
+    def teardown
+      Abaqus::Node.clear
+    end
+    def test_n1
+      assert_equal(1, @n1.i)
+    end
+    def test_n2
+      assert_equal(10, @n2.i)
+    end
+    def test_size
+      assert_equal(2, Abaqus::Node.size)
+    end
+    def test_nextid
+      assert_equal(11, Abaqus::Node.nextid)
+    end
+    def test_added_id_should_be_12
+      n = Abaqus::Node.add(2.0,4.0,7.0)
+      assert_equal(11, n.i)
+    end
+  end
+
 end
 
