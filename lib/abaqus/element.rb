@@ -161,7 +161,7 @@ module Abaqus
       klass = obtain_element_class(type)
       cmd = ""
       eids = []
-      io.each do |line|
+      while line = io.gets
         cmd = line.strip
         case cmd
         when /^\*\*/
@@ -177,7 +177,8 @@ module Abaqus
         es.flatten!
         es.uniq!
       end
-      eids
+      cmd = nil if line.nil?
+      return cmd,eids
     end
 
   end
@@ -185,6 +186,7 @@ end
 
 if $0 == __FILE__
   require 'test/unit'
+  require 'flexmock/test_unit'
   class TestElement < Test::Unit::TestCase
 
     def setup
@@ -329,9 +331,14 @@ if $0 == __FILE__
     def teardown
       Abaqus::Element.clear
     end
+
     def try_parse(cmd,str)
+      body = flexmock("mIO")
+      args = str.map
+      args << nil
+      body.should_receive(:gets).and_return(*args)
       assert_nothing_raised do
-        @ids = Abaqus::Element.parse(cmd,str)
+        @res,@ids = Abaqus::Element.parse(cmd,body)
       end
     end
     def test_handle_one_line
@@ -372,6 +379,82 @@ if $0 == __FILE__
         Abaqus::Element.parse("*ElemEnt, type=Zero",@str1)
       }
     end
+    def test_multiple_definition_of_element_can_be_parsed_correctly
+      cmd = "*Element,Elset=A,type=S4"
+      second_cmd = "*Element,elset=B,type=S4R"
+      ans = [
+        "1, 1,2,4,3",
+        "2, 5,6,8,7",
+        second_cmd,
+        "3, 1,2,6,5",
+        "4, 3,4,8,7",
+        nil
+      ]
+      body = flexmock("mIO")
+      body.should_receive(:gets).and_return(*ans)
+      res,ids = Abaqus::Element.parse(cmd,body)
+      assert_equal([1,2], ids)
+      assert_equal(second_cmd,res)
+      assert_equal(2, Abaqus::Element.size)
+      assert_equal([1,2,4,3], Abaqus::Element[1].nodes)
+      assert_equal("S4", Abaqus::Element[1].type)
+      assert_equal([5,6,8,7], Abaqus::Element[2].nodes)
+      assert_equal("S4", Abaqus::Element[2].type)
+      res2,ids2 = Abaqus::Element.parse(res,body)
+      assert_nil( res2)
+      assert_equal([3,4],ids2)
+      assert_equal(4, Abaqus::Element.size)
+      assert_equal([1,2,4,3], Abaqus::Element[1].nodes)
+      assert_equal("S4", Abaqus::Element[1].type)
+      assert_equal([5,6,8,7], Abaqus::Element[2].nodes)
+      assert_equal("S4", Abaqus::Element[2].type)
+      assert_equal([1,2,6,5], Abaqus::Element[3].nodes)
+      assert_equal("S4R", Abaqus::Element[3].type)
+      assert_equal([3,4,8,7], Abaqus::Element[4].nodes)
+      assert_equal("S4R", Abaqus::Element[4].type)
+    end
+    def test_not_sequential_eid_can_be_handed
+      cmd = "*Element,Elset=A,type=S4"
+      ans = [
+        "2, 5,6,8,7",
+        "1, 1,2,4,3",
+        "4, 3,4,8,7",
+        "3, 1,2,6,5",
+        nil
+      ]
+      body = flexmock("mIO")
+      body.should_receive(:gets).and_return(*ans)
+      res,ids = Abaqus::Element.parse(cmd,body)
+      assert_nil(res)
+      assert_equal([2,1,4,3].sort, ids.sort)
+      assert_equal(4, Abaqus::Element.size)
+    end
+  end
+  class TestElementParseForNonSequencialEID < Test::Unit::TestCase
+    def setup
+      cmd = "*ELEment, type=S4, elset=A"
+      body = flexmock("mIO")
+      body.should_receive(:gets).and_return(
+         "  1, 1, 2, 4, 3",
+          " 11, 5, 6, 8, 7",
+          "101, 1, 2, 6, 5",
+          "102, 3, 4, 8, 7",
+          nil
+      )
+      $res,$ids = Abaqus::Element.parse(cmd, body)
+    end
+    def test_nil
+      assert_nil($res)
+    end
+    def test_eids
+      assert_equal([1,11,101,102], $ids.sort)
+    end
+    def test_size
+      assert_equal(4, Abaqus::Element.size)
+    end
+    def test_nextid
+      assert_equal(103, Abaqus::Element.nextid)
+    end
   end
   class TestElset < Test::Unit::TestCase
     def setup
@@ -390,8 +473,12 @@ if $0 == __FILE__
       Abaqus::Element.clear
     end
     def try_parse(cmd,io)
+      body = flexmock("mIO")
+      strings = io.map{|x| x.to_s}
+      strings << nil
+      body.should_receive(:gets).and_return(*strings)
       assert_nothing_raised{
-        @ids = Abaqus::Element.parse(cmd,io)
+        @res,@ids = Abaqus::Element.parse(cmd,body)
       }
     end
     def test_can_parse_if_elset_option_was_given
