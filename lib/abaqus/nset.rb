@@ -32,7 +32,7 @@ module Abaqus
       if opt["GENERATE"]
         line_parser = lambda do |arg|
           f, t, s = * arg.split(/,/).map{|x| x.to_i}
-          s = 1 if s.nil?
+          s ||= 1
           a = []
           f.step(t,s){|i| a << i}
           a
