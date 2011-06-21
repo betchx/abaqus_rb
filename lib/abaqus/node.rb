@@ -51,6 +51,7 @@ module Abaqus
     end
     def Node.clear
       @@all.clear
+      Nset.clear
       @@maxid = 0
     end
     def Node.parse(line,body)
