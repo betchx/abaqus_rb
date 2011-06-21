@@ -153,31 +153,21 @@ module Abaqus
       setname = ops["ELSET"]
       if setname
         es = Abaqus::Elset[setname] || Abaqus::Elset.new(setname)
+      else
+        es = []
       end
 
       klass = obtain_element_class(type)
       cmd = ""
       eids = []
-      while line = io.gets
-        cmd = line.strip
-        case cmd
-        when /^\*\*/
-          next
-        when /^\*/
-          break
-        else
-          eids << klass.parse(line,io)
-        end
+      cmd = parse_data(io) do |line|
+        es << klass.parse(line,io)
       end
-      if es
-        es << eids
-        es.flatten!
-        es.uniq!
-      end
-      cmd = nil if line.nil?
-      return cmd,eids
+      es.flatten!
+      es.sort!
+      es.uniq!
+      return cmd,es.to_a
     end
-
   end
 end
 

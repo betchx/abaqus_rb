@@ -43,16 +43,8 @@ module Abaqus
         end
       end
       # generate option was given
-      while line = body.gets
-        line.strip!
-        case line
-        when /^\*\*/
-          next
-        when /^\*/
-          break
-        else
-          ns << line_parser[line]
-        end
+      line = parse_data(body) do |str|
+        ns << line_parser[str]
       end
       ns.flatten!
       ns.sort!

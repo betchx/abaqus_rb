@@ -53,7 +53,7 @@ module Abaqus
       @@all.clear
       @@maxid = 0
     end
-    def Node.parse(line,io)
+    def Node.parse(line,body)
       keyword, options = parse_command(line)
       unless keyword == "*NODE"
         raise ArgumentError, "Node.parse can treat *node keyword only."
@@ -66,15 +66,8 @@ module Abaqus
         ns = []
       end
 
-      while line = io.gets
-        line.strip!
-        case line
-        when /^\*\*/
-          next
-        when /^\*[^*]/
-          break
-        end
-        i,x,y,z = * line.strip.split(/,/)
+      line = parse_data(body) do |str|
+        i,x,y,z = * str.split(/,/)
         y ||= 0.0
         z ||= 0.0
         Node.new(i.to_i,x.to_f,y.to_f,z.to_f)
