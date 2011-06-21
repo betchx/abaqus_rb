@@ -78,7 +78,7 @@ if $0 == __FILE__
       @cmd = "*NSET, NSET=#{@name}"
       @body = flexmock("NSetBody")
       @stop = "*TERMINAL"
-      @body.should_receive(:gets).and_return(
+      @body.should_receive(:gets).times(4).and_return(
         (1..8).to_a.join(",")+",",
         (9..16).to_a.join(",")+",",
         "17,18,19",
@@ -118,7 +118,7 @@ if $0 == __FILE__
     end
     def setarg(*args)
       @argset = true
-      @body.should_receive(:gets).and_return(*args)
+      @body.should_receive(:gets).at_most.times(args.size).and_return(*args)
     end
     def parse(cmd = @cmd, body = @body)
       setarg "1,19,1",@stop unless @argset

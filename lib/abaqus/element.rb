@@ -324,7 +324,7 @@ if $0 == __FILE__
       body = flexmock("mIO")
       args = str.map
       args << nil
-      body.should_receive(:gets).and_return(*args)
+      body.should_receive(:gets).at_most.times(args.size).and_return(*args)
       assert_nothing_raised do
         @res,@ids = Abaqus::Element.parse(cmd,body)
       end
@@ -379,7 +379,7 @@ if $0 == __FILE__
         nil
       ]
       body = flexmock("mIO")
-      body.should_receive(:gets).and_return(*ans)
+      body.should_receive(:gets).at_most.times(ans.size).and_return(*ans)
       res,ids = Abaqus::Element.parse(cmd,body)
       assert_equal([1,2], ids)
       assert_equal(second_cmd,res)
@@ -411,7 +411,7 @@ if $0 == __FILE__
         nil
       ]
       body = flexmock("mIO")
-      body.should_receive(:gets).and_return(*ans)
+      body.should_receive(:gets).at_most.times(ans.size).and_return(*ans)
       res,ids = Abaqus::Element.parse(cmd,body)
       assert_nil(res)
       assert_equal([2,1,4,3].sort, ids.sort)
@@ -422,11 +422,11 @@ if $0 == __FILE__
     def setup
       cmd = "*ELEment, type=S4, elset=A"
       body = flexmock("mIO")
-      body.should_receive(:gets).and_return(
-         "  1, 1, 2, 4, 3",
-          " 11, 5, 6, 8, 7",
-          "101, 1, 2, 6, 5",
-          "102, 3, 4, 8, 7",
+      body.should_receive(:gets).times(5).and_return(
+         "  1, 1, 2, 4, 3\n",
+          " 11, 5, 6, 8, 7\n",
+          "101, 1, 2, 6, 5\n",
+          "102, 3, 4, 8, 7\n",
           nil
       )
       $res,$ids = Abaqus::Element.parse(cmd, body)
@@ -464,7 +464,7 @@ if $0 == __FILE__
       body = flexmock("mIO")
       strings = io.map{|x| x.to_s}
       strings << nil
-      body.should_receive(:gets).and_return(*strings)
+      body.should_receive(:gets).at_most.times(strings.size).and_return(*strings)
       assert_nothing_raised{
         @res,@ids = Abaqus::Element.parse(cmd,body)
       }
