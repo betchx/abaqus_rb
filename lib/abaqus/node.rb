@@ -1,7 +1,10 @@
 
+require 'abaqus/nset'
+require 'abaqus/inp'
 
 module Abaqus
   class Node
+    extend Inp
     attr :i
     attr :x
     attr :y
@@ -51,15 +54,33 @@ module Abaqus
       @@maxid = 0
     end
     def Node.parse(line,io)
-      # no need to parse first line
-      line = io.gets
-      until line.nil? || line =~ /^\*[^*]/
+      keyword, options = parse_command(line)
+      unless keyword == "*NODE"
+        raise ArgumentError, "Node.parse can treat *node keyword only."
+      end
+      ns = nil
+      name = options["NSET"]
+      if name
+        ns = Nset[name] || Nset.new(name)
+      else
+        ns = []
+      end
+
+      while line = io.gets
+        line.strip!
+        case line
+        when /^\*\*/
+          next
+        when /^\*[^*]/
+          break
+        end
         i,x,y,z = * line.strip.split(/,/)
         y ||= 0.0
         z ||= 0.0
         Node.new(i.to_i,x.to_f,y.to_f,z.to_f)
+        ns << i.to_i if ns
       end
-      line
+      return line, ns.to_a
     end
   end
   def to_s
@@ -71,6 +92,7 @@ end
 
 if $0 == __FILE__
   require 'test/unit'
+  require 'flexmock/test_unit'
   class TestNode < Test::Unit::TestCase
     def setup
     end
@@ -171,6 +193,38 @@ if $0 == __FILE__
       n = Abaqus::Node.add(2.0,4.0,7.0)
       assert_equal(11, n.i)
     end
+  end
+  class TestNodeParse < Test::Unit::TestCase
+    def setup
+      @body = flexmock("mIO")
+      @body.should_receive(:each).and_raise(NameError)
+    end
+    def teardown
+      Abaqus::Node.clear
+    end
+    def test_parse_returns_next_command_and_node_ids
+      @body.should_receive(:gets).twice.and_return("1, 0.0, 0.0, 0.0",nil)
+      res = Abaqus::Node.parse("*NODE",@body)
+      assert_instance_of(Array, res)
+    end
+    def test_parse_returns_nil_at_end_of_file
+      @body.should_receive(:gets).times(3).and_return("1, 0.0, 0.0, 0.0",
+                                             "2, 0.0, 0.0, 0,0",
+                                             nil)
+      res, ids = Abaqus::Node.parse("*node",@body)
+      assert_nil(res)
+    end
+    def test_parse_should_return_created_id_list_as_second_retval
+      @body.should_receive(:gets).times(4).and_return("1, 0.0, 0.0",
+                                             "3, 1.0, 0.0",
+                                             "5, 0.0, 1.0",
+                                             nil)
+      ans = [1,3,5]
+      res, ids = Abaqus::Node.parse("*node", @body)
+      assert_equal(ans,ids.sort)
+    end
+
+
   end
 
 end
