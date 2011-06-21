@@ -1,9 +1,11 @@
 
 require 'abaqus/node'
 require 'abaqus/elset'
+require 'abaqus/inp'
 
 module Abaqus
   class Element
+    extend Inp
     @@all = {}
     @@maxid = 0
     def Element.clear
@@ -137,27 +139,22 @@ module Abaqus
     end
 
     def Element.parse(line, io)
-      unless line =~ /^\*/
-        raise ArgumentError,"given argument seems not to be command."
-      end
-      cmd, *ops = line.split(/,/).map{|x| x.strip}
-      unless cmd =~ /^\*element$/i
+      cmd, ops = parse_command(line)
+      unless cmd == "*ELEMENT"
         raise ArgumentError,"Element.parse can handle *element keyword only."
       end
-      type = nil
-      es = nil
-      ops.each do |str|
-        key,val = * str.upcase.split(/\s*=\s*/,2)
-        case key
-        when "TYPE"
-          type = val
-        when "ELSET"
-          es = Abaqus::Elset[val] || Abaqus::Elset.new(val)
-        end
-      end
+
+      type = ops["TYPE"]
       unless type
         raise ArgumentError,"element type must be specified."
       end
+
+      es = nil
+      setname = ops["ELSET"]
+      if setname
+        es = Abaqus::Elset[setname] || Abaqus::Elset.new(setname)
+      end
+
       klass = obtain_element_class(type)
       cmd = ""
       eids = []
