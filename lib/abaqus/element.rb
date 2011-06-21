@@ -10,6 +10,7 @@ module Abaqus
     @@maxid = 0
     def Element.clear
       @@all.clear
+      Abaqus::Elset.clear
       @@maxid = 0
     end
     def initialize
