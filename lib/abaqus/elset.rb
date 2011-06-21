@@ -1,6 +1,9 @@
 
+require 'abaqus/inp'
+
 module Abaqus
   class Elset < Array
+    extend Inp
     @@known_set = {}
     def Elset.[](name)
       @@known_set[name.upcase]
@@ -17,33 +20,18 @@ module Abaqus
     end
 
     def Elset.parse(head,body)
-      # argument check
-      #head
       raise ArgumentError,"body is required" unless body
-      keyword, *ops = head.strip.split(/\s*,\s*/)
+      keyword, ops = parse_command(head)
       unless keyword =~ /\*ELSET/i then
         raise ArgumentError,
           "Wrong keyword. *ELSET was expected, but #{keyword} was given"
       end
-      name = nil
-      generate = false
-      ops.each do |option|
-        key,val=option.upcase.split(/\s*=\s*/,2)
-        case key
-        when "ELSET"
-          name = val
-        when "GENERATE"
-          generate = true
-        end
-      end
-      if name.nil?
+      unless name = ops["ELSET"]
         raise ArgumentError, "ELSET option was not given"
       end
       set = Abaqus::Elset.new(name)
-      if generate
-        body.each do |line|
-          next if line[0,2] == "**"
-          return line.strip if line[0,1] == "*"
+      if ops["GENERATE"]
+        cmd = parse_data(body) do |line|
           a = line.split(/,/)
           case a.size
           when 3
@@ -57,18 +45,14 @@ module Abaqus
           b.step(e,s){|i| set << i}
         end
       else
-        body.each do |line|
-          next if line[0,2] == "**"
-          return line.strip if line[0,1] == "*"
-
+        cmd = parse_data(body)do |line|
           set << line.split(/,/).map{|x| x.to_i}
-          set.flatten!
-          set.sort!
-          set.uniq!
         end
+        set.flatten!
+        set.sort!
+        set.uniq!
       end
-      # file ended
-      return nil
+      return cmd
     end
   end
 end
@@ -77,6 +61,8 @@ end
 if $0 == __FILE__
 
   require 'test/unit'
+  require 'flexmock/test_unit'
+
   class TestElset < Test::Unit::TestCase
 
     def setup
@@ -103,50 +89,57 @@ if $0 == __FILE__
     def setup
       @name = "TestSet"
       @cmd = "*ELSET, ELSET=#{@name}"
+      @body = flexmock("mIO")
     end
     def teardown
       Abaqus::Elset.clear
     end
 
     def test_parse_without_raised
+      @body.should_receive(:gets).once.and_return(nil)
       assert_nothing_raised{
-        Abaqus::Elset.parse(@cmd, "")
+        Abaqus::Elset.parse(@cmd, @body)
       }
     end
     def test_parse_register_new_elset
-      Abaqus::Elset.parse(@cmd, "")
+      @body.should_receive(:gets).once.and_return(nil)
+      Abaqus::Elset.parse(@cmd, @body)
       assert_instance_of(Abaqus::Elset, Abaqus::Elset[@name])
     end
     def test_count_of_elset_must_be_same
-      Abaqus::Elset.parse(@cmd, "3,4")
+      @body.should_receive(:gets).twice.and_return("3,4",nil)
+      Abaqus::Elset.parse(@cmd, @body)
       assert_not_nil(Abaqus::Elset[@name])
       assert_equal(2, Abaqus::Elset[@name].size)
     end
     def test_parse_must_finish_when_new_keyword_appears
-      body = <<-NNN
-10, 20, 30
-*NSET, NSET=hoge
-5,6,7,8,9
-      NNN
-      Abaqus::Elset.parse(@cmd, body)
+      @body.should_receive(:gets).twice.and_return(
+        "10, 20, 30\n",
+        "*NSET, NSET=hoge\n",
+        "5,6,7,8,9\n",
+        nil
+      )
+      Abaqus::Elset.parse(@cmd, @body)
       assert_equal([10,20,30], Abaqus::Elset[@name])
     end
     def test_parse_must_return_new_kyword_without_newline
-      body = <<-NNN
-1,2,3
-*KEYWORD
-      NNN
-      res = Abaqus::Elset.parse(@cmd,body)
+      @body.should_receive(:gets).twice.and_return(
+        "1,2,3\n",
+        "*KEYWORD\n",nil
+      )
+      res = Abaqus::Elset.parse(@cmd,@body)
       assert_equal("*KEYWORD",res)
     end
     def test_raise_ArgumentError_if_ELSET_parameter_was_not_given
+      @body.should_receive(:gets).never
       assert_raise(ArgumentError){
-        Abaqus::Elset.parse("*Elset", "")
+        Abaqus::Elset.parse("*Elset", @body)
       }
     end
     def test_raise_ArgumentError_if_keyword_is_not_Elset
+      @body.should_receive(:gets).never
       assert_raise(ArgumentError){
-        Abaqus::Elset.parse("*NSET","")
+        Abaqus::Elset.parse("*NSET",@body)
       }
     end
     def test_raise_ArgumentError_if_body_was_not_given
@@ -156,20 +149,22 @@ if $0 == __FILE__
     end
 
     def test_parse_handle_multiline_body
-      body = <<-KKK
-10, 11, 12, 13, 14, 15, 16,17
-20, 21, 22,23,24,25
-      KKK
+      @body.should_receive(:gets).times(3).and_return(
+        "10, 11, 12, 13, 14, 15, 16,17",
+        "20, 21, 22,23,24,25",nil
+      )
       res = [10,11,12,13,14,15,16,17,20,21,22,23,24,25]
-      Abaqus::Elset.parse(@cmd,body)
+      Abaqus::Elset.parse(@cmd,@body)
       assert_equal(res, Abaqus::Elset[@name])
     end
     def test_generate_option_with_two_column
-      Abaqus::Elset.parse( "*elset, elset=gene, generate", "1,5")
+      @body.should_receive(:gets).twice.and_return("1,5",nil)
+      Abaqus::Elset.parse( "*elset, elset=gene, generate", @body)
       assert_equal([1,2,3,4,5],Abaqus::Elset["gene"])
     end
     def test_generate_option_with_three_column
-      Abaqus::Elset.parse("*elset, elset=g3,generate","1,7,2")
+      @body.should_receive(:gets).twice.and_return("1,7,2",nil)
+      Abaqus::Elset.parse("*elset, elset=g3,generate",@body)
       assert_equal([1,3,5,7], Abaqus::Elset["g3"])
     end
   end
