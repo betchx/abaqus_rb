@@ -19,6 +19,15 @@ module Abaqus
       return cmd, opt
     end
 
+    def parse_data(io)
+      while line = io.gets
+        line.strip!
+        next if line[0,2] == "**"
+        break if line[0,1] == "*"
+        yield line
+      end
+      line
+    end
   end
 end
 
