@@ -1,15 +1,62 @@
 
-require 'abaqus/element/base'
-require 'abaqus/element/s4'
+unless defined?(Abaqus::Element)
+  require File::dirname(__FILE__)+'/base'
+end
+
+
+module Abaqus
+  class Element
+    class S4 < Element
+      def initialize(i,n1,n2,n3,n4)
+        @nodes = [n1,n2,n3,n4]
+        @i = i
+        assign
+      end
+      attr_reader :i
+      def [](n)
+        if n < 4 && n > -5
+          @nodes[n]
+        else
+          raise ArgumentError,"index must be between 0 and 3"
+        end
+      end
+      def assign
+        super(@i,self)
+      end
+      private :assign
+
+      def type
+        "S4"
+      end
+      def nodes
+        @nodes
+      end
+      def S4.parse_line(line)
+        i,n1,n2,n3,n4, n5 = * line.split(/,/)
+        if n5
+          raise RuntimeError, "Too many nodes are given"
+        end
+        unless n4
+          raise RuntimeError, "Given nodes are not enough"
+        end
+        return i,n1,n2,n3,n4
+      end
+      def S4.parse(line,io)
+        self.new(*parse_line(line).map{|x| x.to_i})
+      end
+      #Element.register("S4",self)
+      #Element.regist_as_basic_element(/^S4/,self)
+      Element::BasicElementMap << [/^S4/,self]
+    end
+  end
+end
+
 
 
 if $0 == __FILE__
   require 'test/unit'
   require 'flexmock/test_unit'
   class TestElement < Test::Unit::TestCase
-
-    # create S4R class from S4
-    Abaqus::Element.obtain_element_class("S4R")
 
     def setup
       @nodes = [1,2,3,4,5,6,7,8]
@@ -117,12 +164,6 @@ if $0 == __FILE__
       eid = rand(7438)
       e = Abaqus::Element::S4.new(eid, 1, 2,4,3)
       assert_equal(eid+1,Abaqus::Element.nextid)
-    end
-
-    ### S4R
-    def test_S4R_type_must_return_S4R
-      e = s4r
-      assert_equal("S4R",e.type)
     end
 
     def test_Element_parse_request_command_is_ELEMENT
@@ -315,5 +356,6 @@ if $0 == __FILE__
       assert_equal([1], Abaqus::Elset[@elset_name])
     end
   end
+
 end
 
