@@ -1,6 +1,11 @@
 
 unless defined?(Abaqus::Element)
-  require File::dirname(__FILE__)+'/base'
+  #require File::dirname(__FILE__)+'/base'
+  require 'abaqus/element/base'
+end
+
+unless defined?(Abaqus::Model)
+  require 'abaqus/model'
 end
 
 
@@ -238,7 +243,7 @@ if $0 == __FILE__
       assert_equal("S4R5", Abaqus::Element[1].type)
     end
     def test_parse_raise_ArgumentError_when_unknown_type_was_given
-      assert_raise(ArgumentError){
+      assert_raise(NameError){
         Abaqus::Element.parse("*ElemEnt, type=Zero",@str1)
       }
     end
@@ -354,6 +359,19 @@ if $0 == __FILE__
     def test_elset_must_contain_created_element_id_by_parse
       try_parse(@cmd,@str1)
       assert_equal([1], Abaqus::Elset[@elset_name])
+    end
+  end
+  class TestBind < Test::Unit::TestCase
+    def setup
+      @name = "BindTestModel"
+      @m = Abaqus::Model.new(@name)
+    end
+    def test_element
+      Abaqus::Element.bind(@m)
+      e = Abaqus::Element::S4.new(1,1,2,3,4)
+      assert_equal(1, @m.elements.size)
+      assert_equal(e, @m.elements[1])
+      assert_equal(e, Abaqus::Element[1])
     end
   end
 

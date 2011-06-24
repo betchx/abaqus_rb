@@ -4,18 +4,21 @@ require 'abaqus/inp'
 module Abaqus
   class Elset < Array
     extend Inp
-    @@known_set = {}
-    def Elset.[](name)
-      @@known_set[name.upcase]
+    def self.[](name)
+      @@all[name.upcase]
     end
-    def Elset.clear
-      @@known_set.clear
+    def self.clear
+      @@all.clear
     end
+    def self.size
+      @@all.size
+    end
+
     def initialize(name, *args)
       unless name.instance_of?(String)
         raise ScriptError, "First argument of Elset.new must be Elset name (instance of String) "
       end
-      @@known_set[name.upcase] = self
+      @@all[name.upcase] = self
       super(*args)
     end
 

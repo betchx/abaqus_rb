@@ -2,23 +2,48 @@
 require 'abaqus/node'
 require 'abaqus/elset'
 require 'abaqus/inp'
-
+require 'abaqus/model'
 
 module Abaqus
   class Element
     extend Inp
-    # Element.new is not allowed
+    # Element.new recieve type and create it
+    def self.new(*args,&blocks)
+      if args.empty?
+        return super
+      end
+      case args[0]
+      when String
+        element_type = args.shift
+        return obtain_element_class(element_type).new(*args,&blocks)
+      else
+        return super
+      end
+    end
     def initialize
       raise "Abaqus::Element.new is not allowed. Use sub classes instead"
     end
     attr_reader :i, :nodes
 
-    @@all = {}
+    @@all = Abaqus::GlobalModel.elements
     @@maxid = 0
     def self.clear
       @@all.clear
       Abaqus::Elset.clear
       @@maxid = 0
+    end
+    def self.bind(model)
+      @@all = model.elements
+      @@maxid = @@all.keys.max || 0
+    end
+    def self.release
+      @@all = GlobalModel.elements
+      @@maxid = @@all.keys.max || 0
+    end
+    def self.bind_with(model)
+      bind(model)
+      yield
+      release
     end
 
     def assign(eid,element)
@@ -42,6 +67,9 @@ module Abaqus
         raise IndexError,"Specified id of #{i} exeeds used id number"
       end
       @@all[i] or raise IndexError,"EID #{i} is not used."
+    end
+    def self.const_missing(name)
+      obtain_element_class(name)
     end
 
     def self.size
@@ -70,9 +98,9 @@ module Abaqus
       BasicElementMap << [re, klass]
     end
 
-    def self.obtain_base_class(type)
+    def self.obtain_base_class(eltype)
       BasicElementMap.each do |re,klass|
-        if re.match(type)
+        if re.match(eltype)
           return klass
         end
       end
@@ -82,7 +110,7 @@ module Abaqus
     def self.create_new_element_class(type)
       base = obtain_base_class(type)
       if base.nil?
-        raise ArgumentError, "Unknown element type was specified"
+        raise NameError, "undefinde constant or Unknown element type: #{type}"
       end
       klass = Class.new(base){|m|
         @@type = type
@@ -159,11 +187,6 @@ if $0 == __FILE__
   class TestElement < Test::Unit::TestCase
 
     # Initial
-    def test_element_new_is_not_allowed
-      assert_raise(RuntimeError){
-        Abaqus::Element.new
-      }
-    end
     def test_initially_Element_has_empty_list
       assert_equal(0,Abaqus::Element.size)
     end

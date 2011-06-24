@@ -1,4 +1,5 @@
 
+require 'abaqus/model'
 require 'abaqus/nset'
 require 'abaqus/inp'
 
@@ -9,7 +10,7 @@ module Abaqus
     attr :x
     attr :y
     attr :z
-    @@all = Hash.new
+    @@all = GlobalModel.nodes
     @@maxid = 0
     UpperLimitID = 9999999
     def Node.[](i)

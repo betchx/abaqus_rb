@@ -2,26 +2,28 @@ require 'abaqus/inp'
 module Abaqus
   class Nset < Array
     extend Inp
-    @@known_set = {}
-    def Nset.[](name)
-      @@known_set[name.upcase]
+    def self.[](name)
+      @@all[name.upcase]
     end
-    def Nset.clear
-      @@known_set.clear
+    def self.clear
+      @@all.clear
+    end
+    def self.size
+      @@all.size
     end
     def initialize(name, *args)
       unless name.instance_of?(String)
         raise ScriptError, "First argument of Nset.new must be set name of String class"
       end
       @name = name.upcase
-      @@known_set[@name] = self
+      @@all[@name] = self
       super(*args)
     end
     attr_reader :name
     def Nset.parse(head, body)
       keyword, opt = parse_command(head)
       unless keyword == "*NSET"
-        raise ArgumentError, 
+        raise ArgumentError,
           "wrong keyword of #{keyword} was given for Nset.parse"
       end
       name = opt["NSET"]
