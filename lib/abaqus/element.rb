@@ -286,39 +286,37 @@ if $0 == __FILE__
     end
   end
   class TestElsetWithELsetOption < Test::Unit::TestCase
-    def setup
-      @elset_name = "TestElements"
-      @cmd = "*element, type=S4, elset=#{@elset_name}"
-      @str1 = <<-NNN
-1, 1,2,4,3
-      NNN
-      @str2 = <<-KKK
-2, 1,2,4,3
-3, 5,6,8,7
-      KKK
-      @ids = 0
-    end
     def teardown
       Abaqus::Element.clear
     end
-    def try_parse(cmd,io)
-      body = flexmock("mIO")
-      strings = io.map{|x| x.to_s}
-      strings << nil
-      body.should_receive(:gets).at_most.times(strings.size).and_return(*strings)
+    def setup
+      @elset_name = "TestElements"
+      @body = flexmock("mIO")
+      @body.should_receive(:gets).at_most.times(2).
+        and_return("1, 1,2,4,3\n", nil)
+      @ids = 0
+      @cmd = "*element, type=S4, elset=#{@elset_name}"
+    end
+    def try_parse(cmd,body)
       assert_nothing_raised{
         @res,@ids = Abaqus::Element.parse(cmd,body)
       }
     end
     def test_can_parse_if_elset_option_was_given
-      try_parse(@cmd,@str1)
+      assert_not_nil(@cmd)
+      assert_not_nil(@body)
+      try_parse(@cmd,@body)
     end
     def test_elset_was_created_after_parse_with_elset_option
-      try_parse(@cmd,@str1)
+      assert_not_nil(@cmd)
+      assert_not_nil(@body)
+      try_parse(@cmd,@body)
       assert(Abaqus::Elset[@elset_name])
     end
     def test_elset_must_contain_created_element_id_by_parse
-      try_parse(@cmd,@str1)
+      assert_not_nil(@cmd)
+      assert_not_nil(@body)
+      try_parse(@cmd,@body)
       assert_equal([1], Abaqus::Elset[@elset_name])
     end
   end
