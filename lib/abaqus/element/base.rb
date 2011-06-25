@@ -187,7 +187,7 @@ if $0 == __FILE__
       end
     end
   end
-  class TestElement < Test::Unit::TestCase
+  class TestElementBase < Test::Unit::TestCase
 
     # Initial
     def test_initially_Element_has_empty_list
@@ -207,7 +207,7 @@ if $0 == __FILE__
     end
 
   end
-  class TestElset < Test::Unit::TestCase
+  class TestElsetBase < Test::Unit::TestCase
     def setup
       @elset_name = "TestElements"
       @cmd = "*element, type=#{$static_name}, elset=#{@elset_name}"

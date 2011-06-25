@@ -141,7 +141,7 @@ if $0 == __FILE__
       end
     end
   end
-  class TestS4Parse < Test::Unit::TestCase
+  class TestXS4Parse < Test::Unit::TestCase
     def setup
       @cmd = "*Element, type=S4"
       @str1 = <<-NNN
@@ -255,7 +255,7 @@ if $0 == __FILE__
       assert_equal(4, Abaqus::Element.size)
     end
   end
-  class TestElementParseForNonSequencialEID < Test::Unit::TestCase
+  class TestElementXParseForNonSequencialEID < Test::Unit::TestCase
     def setup
       cmd = "*ELEment, type=S4, elset=A"
       body = flexmock("mIO")
@@ -281,7 +281,7 @@ if $0 == __FILE__
       assert_equal(103, Abaqus::Element.nextid)
     end
   end
-  class TestElset < Test::Unit::TestCase
+  class TestElsetWithELsetOption < Test::Unit::TestCase
     def setup
       @elset_name = "TestElements"
       @cmd = "*element, type=S4, elset=#{@elset_name}"

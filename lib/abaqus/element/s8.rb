@@ -263,7 +263,7 @@ if $0 == __FILE__
       assert_equal(4, Abaqus::Element.size)
     end
   end
-  class TestElementParseForNonSequencialEID < Test::Unit::TestCase
+  class TestElementS8ParseForNonSequencialEID < Test::Unit::TestCase
     def setup
       cmd = "*ELEment, type=S8, elset=A"
       body = flexmock("mIO")
@@ -291,7 +291,7 @@ if $0 == __FILE__
       assert_equal(@nextid, Abaqus::Element.nextid)
     end
   end
-  class TestElset < Test::Unit::TestCase
+  class TestElsetInS8 < Test::Unit::TestCase
     def setup
       @elset_name = "TestElements"
       @cmd = "*element, type=S8, elset=#{@elset_name}"

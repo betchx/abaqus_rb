@@ -64,7 +64,7 @@ end
 if $0 == __FILE__
   require 'test/unit'
   require 'flexmock/test_unit'
-  class TestElement < Test::Unit::TestCase
+  class TestElementS4 < Test::Unit::TestCase
 
     def setup
       @nodes = [1,2,3,4,5,6,7,8]
@@ -301,7 +301,7 @@ if $0 == __FILE__
       assert_equal(4, Abaqus::Element.size)
     end
   end
-  class TestElementParseForNonSequencialEID < Test::Unit::TestCase
+  class TestElementS4ParseForNonSequencialEID < Test::Unit::TestCase
     def setup
       cmd = "*ELEment, type=S4, elset=A"
       body = flexmock("mIO")
@@ -327,7 +327,7 @@ if $0 == __FILE__
       assert_equal(103, Abaqus::Element.nextid)
     end
   end
-  class TestElset < Test::Unit::TestCase
+  class TestElsetS4 < Test::Unit::TestCase
     def setup
       @elset_name = "TestElements"
       @cmd = "*element, type=S4, elset=#{@elset_name}"
@@ -364,7 +364,7 @@ if $0 == __FILE__
       assert_equal([1], Abaqus::Elset[@elset_name])
     end
   end
-  class TestBind < Test::Unit::TestCase
+  class TestBindS4 < Test::Unit::TestCase
     def setup
       @name = "BindTestModel"
       @m = Abaqus::Model.new(@name)
