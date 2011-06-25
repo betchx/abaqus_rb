@@ -1,4 +1,6 @@
 
+unless defined?(ABAQUS_ELEMENT)
+  ABAQUS_ELEMENT= true
 require 'abaqus/node'
 require 'abaqus/elset'
 require 'abaqus/inp'
@@ -156,6 +158,7 @@ module Abaqus
   end
 end
 
+end
 
 
 if $0 == __FILE__

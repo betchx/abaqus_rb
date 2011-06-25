@@ -1,4 +1,6 @@
 
+unless defined?(ABAQUS_NODE)
+  ABAQUS_NODE = true
 require 'abaqus/nset'
 require 'abaqus/inp'
 
@@ -73,14 +75,14 @@ module Abaqus
         z ||= 0.0
         Node.new(i.to_i,x.to_f,y.to_f,z.to_f)
         ns << i.to_i if ns
+        return line, ns.to_a
       end
-      return line, ns.to_a
     end
-  end
-  def to_s
-    s = "#{@i},  #{@x},  #{@y}"
-    s += ",  #{@z}" unless @z != 0.0
-    return s
+    def to_s
+      s = "#{@i},  #{@x},  #{@y}"
+      s += ",  #{@z}" unless @z != 0.0
+      return s
+    end
   end
 end
 

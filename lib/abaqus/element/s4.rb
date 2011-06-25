@@ -1,4 +1,5 @@
 
+unless defined?(Abaqus::Element::S4)
 unless defined?(Abaqus::Element)
   #require File::dirname(__FILE__)+'/base'
   require 'abaqus/element/base'
@@ -54,6 +55,8 @@ module Abaqus
       Element::BasicElementMap << [/^S4/,self]
     end
   end
+end
+
 end
 
 

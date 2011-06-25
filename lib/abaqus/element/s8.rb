@@ -1,4 +1,5 @@
 
+unless defined?(Abaqus::Element::S8)
 unless defined?(Abaqus::Element)
   require File::dirname(__FILE__)+'/base'
 end
@@ -51,6 +52,7 @@ module Abaqus
   end
 end
 
+end
 
 
 if $0 == __FILE__
