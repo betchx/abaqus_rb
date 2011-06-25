@@ -22,15 +22,17 @@ module Abaqus
   GlobalModel = Model.new("global")
 end
 
-require 'abaqus/node'
-require 'abaqus/nset'
-require 'abaqus/element'
-require 'abaqus/elset'
-require 'abaqus/property'
-require 'abaqus/bc'
-require 'abaqus/load'
-require 'abaqus/step'
-require 'abaqus/material'
+pos = File::dirname(__FILE__)
+
+require pos + '/node'
+require pos + '/nset'
+require pos + '/element'
+require pos + '/elset'
+require pos + '/property'
+require pos + '/bc'
+require pos + '/load'
+require pos + '/step'
+require pos + '/material'
 
 module Abaqus
   class Model

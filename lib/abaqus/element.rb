@@ -1,6 +1,9 @@
 
-require 'abaqus/element/base'
-require 'abaqus/element/s4'
+pos = File.dirname(__FILE__)
+
+require pos + '/element/base'
+require pos + '/element/s4'
+require pos + '/element/s8'
 
 
 if $0 == __FILE__

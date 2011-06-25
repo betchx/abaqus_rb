@@ -1,9 +1,6 @@
 
 unless defined?(ABAQUS_ELEMENT)
   ABAQUS_ELEMENT= true
-require 'abaqus/node'
-require 'abaqus/elset'
-require 'abaqus/inp'
 
 module Abaqus
   class Element
@@ -26,6 +23,10 @@ module Abaqus
     end
     attr_reader :i, :nodes
 
+  p pos = File.dirname(File.dirname(__FILE__))
+  #require pos + '/node'
+  require pos + '/elset'
+  require pos + '/inp'
     @@all = Abaqus::GlobalModel.elements
     @@maxid = 0
     def self.clear

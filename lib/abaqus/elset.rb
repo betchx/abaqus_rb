@@ -1,5 +1,6 @@
 
-require 'abaqus/inp'
+pos = File::dirname(__FILE__)
+require pos + '/inp'
 
 module Abaqus
   class Elset < Array
