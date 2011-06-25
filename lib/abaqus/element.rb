@@ -161,7 +161,7 @@ if $0 == __FILE__
 
     def try_parse(cmd,str)
       body = flexmock("mIO")
-      args = str.map
+      args = str.to_a
       args << nil
       body.should_receive(:gets).at_most.times(args.size).and_return(*args)
       assert_nothing_raised do
