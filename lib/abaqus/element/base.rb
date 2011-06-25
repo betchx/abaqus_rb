@@ -2,7 +2,6 @@
 require 'abaqus/node'
 require 'abaqus/elset'
 require 'abaqus/inp'
-require 'abaqus/model'
 
 module Abaqus
   class Element
@@ -37,7 +36,6 @@ module Abaqus
       @@maxid = @@all.keys.max || 0
     end
     def self.release
-      @@all = GlobalModel.elements
       @@maxid = @@all.keys.max || 0
     end
     def self.bind_with(model)
@@ -56,6 +54,7 @@ module Abaqus
       @@maxid + 1
     end
 
+      @@all = {}
     def self.[](i)
       if i < 0
         raise IndexError,"Negative element ID is not allowed"

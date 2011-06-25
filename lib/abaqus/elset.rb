@@ -4,6 +4,7 @@ require 'abaqus/inp'
 module Abaqus
   class Elset < Array
     extend Inp
+    @@all = {}
     def self.[](name)
       @@all[name.upcase]
     end

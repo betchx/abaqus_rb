@@ -1,5 +1,4 @@
 
-require 'abaqus/model'
 require 'abaqus/nset'
 require 'abaqus/inp'
 
@@ -10,7 +9,6 @@ module Abaqus
     attr :x
     attr :y
     attr :z
-    @@all = GlobalModel.nodes
     @@maxid = 0
     UpperLimitID = 9999999
     def Node.[](i)
@@ -34,6 +32,7 @@ module Abaqus
         nil
       else
         size - 1
+      @@all = {}
       end
     end
     def initialize(i,x,y,z=0.0)

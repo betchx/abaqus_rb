@@ -2,6 +2,7 @@ require 'abaqus/inp'
 module Abaqus
   class Nset < Array
     extend Inp
+    @@all = {}
     def self.[](name)
       @@all[name.upcase]
     end
