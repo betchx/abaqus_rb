@@ -169,6 +169,7 @@ if $0 == __FILE__
   $static_name = "StaticElement"
   module Abaqus
     class Element
+      unless defined?(StaticElement)
       class StaticElement < Element
         extend Inp
         def type
@@ -183,7 +184,8 @@ if $0 == __FILE__
           i, *a = head.split(/,/).map{|x| x.to_i}
           self.new(i, *a)
         end
-        Element::BasicElementMap << [/./,self]
+        Element::BasicElementMap << [/^StaticElement/i,self]
+      end
       end
     end
   end
