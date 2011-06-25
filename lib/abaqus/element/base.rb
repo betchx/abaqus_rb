@@ -2,162 +2,169 @@
 unless defined?(ABAQUS_ELEMENT)
   ABAQUS_ELEMENT= true
 
-module Abaqus
-  class Element
-    extend Inp
-    # Element.new recieve type and create it
-    def self.new(*args,&blocks)
-      if args.empty?
-        return super
-      end
-      case args[0]
-      when String
-        element_type = args.shift
-        return obtain_element_class(element_type).new(*args,&blocks)
-      else
-        return super
-      end
-    end
-    def initialize
-      raise "Abaqus::Element.new is not allowed. Use sub classes instead"
-    end
-    attr_reader :i, :nodes
-
   p pos = File.dirname(File.dirname(__FILE__))
   #require pos + '/node'
   require pos + '/elset'
   require pos + '/inp'
-    @@all = Abaqus::GlobalModel.elements
-    @@maxid = 0
-    def self.clear
-      @@all.clear
-      Abaqus::Elset.clear
-      @@maxid = 0
-    end
-    def self.bind(model)
-      @@all = model.elements
-      @@maxid = @@all.keys.max || 0
-    end
-    def self.release
-      @@maxid = @@all.keys.max || 0
-    end
-    def self.bind_with(model)
-      bind(model)
-      yield
-      release
-    end
 
-    def assign(eid,element)
-      @@all[eid] = element
-      @@maxid = eid if @@maxid < eid
-    end
-    private :assign
-
-    def self.nextid
-      @@maxid + 1
-    end
+  module Abaqus
+    class Element
+      extend Inp
+      # Element.new recieve type and create it
+      def self.new(*args,&blocks)
+        if args.empty?
+          return super
+        end
+        case args[0]
+        when String
+          element_type = args.shift
+          return obtain_element_class(element_type).new(*args,&blocks)
+        else
+          return super
+        end
+      end
+      def initialize
+        raise "Abaqus::Element.new is not allowed. Use sub classes instead"
+      end
+      attr_reader :i, :nodes
 
       @@all = {}
-    def self.[](i)
-      if i < 0
-        raise IndexError,"Negative element ID is not allowed"
+      @@maxid = 0
+      def self.clear
+        @@all.clear
+        Abaqus::Elset.clear
+        @@maxid = 0
       end
-      if i == 0
-        raise IndexError,"EID 0 is not allowed now"
+=begin
+      def self.bind(model)
+        @@all = model.elements
+        @@maxid = @@all.keys.max || 0
       end
-      if i > @@all.size
-        raise IndexError,"Specified id of #{i} exeeds used id number"
+      def self.release
+        @@all = GlobalModel.elements
+        @@maxid = @@all.keys.max || 0
       end
-      @@all[i] or raise IndexError,"EID #{i} is not used."
-    end
-    def self.const_missing(name)
-      obtain_element_class(name)
-    end
-
-    def self.size
-      @@all.size
-    end
-
-    @@KnownElements = Hash.new
-    def self.regist(type,klass)
-      @@KnownElements[type] = klass
-    end
-
-    def self.inherited(klass)
-      unless klass.name.empty?
-        # automatically registered for static class definition.
-        type = klass.name.split(/::/).pop
-        regist(type,klass)
+      def self.bind_with(model)
+        bind(model)
+        yield
+        release
       end
-    end
+=end
 
-    def self.obtain_element_class(type)
-      @@KnownElements[type] || create_new_element_class(type)
-    end
+      def assign(eid,element)
+        @@all[eid] = element
+        @@maxid = eid if @@maxid < eid
+      end
+      private :assign
 
-    BasicElementMap = []
-    def self.regist_as_basic_element(re,klass)
-      BasicElementMap << [re, klass]
-    end
+      def self.nextid
+        @@maxid + 1
+      end
 
-    def self.obtain_base_class(eltype)
-      BasicElementMap.each do |re,klass|
-        if re.match(eltype)
-          return klass
+      def self.[](i)
+        if i < 0
+          raise IndexError,"Negative element ID is not allowed"
+        end
+        if i == 0
+          raise IndexError,"EID 0 is not allowed now"
+        end
+        if i > @@all.size
+          raise IndexError,"Specified id of #{i} exeeds used id number"
+        end
+        @@all[i] or raise IndexError,"EID #{i} is not used."
+      end
+      def self.const_missing(name)
+        obtain_element_class(name)
+      end
+
+      def self.size
+        @@all.size
+      end
+
+      @@KnownElements = Hash.new
+      def self.regist(type,klass)
+        @@KnownElements[type] = klass
+      end
+      def self.known_elements
+        @@KnownElements.keys
+      end
+
+      def self.inherited(klass)
+        unless klass.name.empty?
+          # automatically registered for static class definition.
+          type = klass.name.split(/::/).pop
+          regist(type,klass)
         end
       end
-      return nil
-    end
 
-    def self.create_new_element_class(type)
-      base = obtain_base_class(type)
-      if base.nil?
-        raise NameError, "undefinde constant or Unknown element type: #{type}"
+      def self.obtain_element_class(eltype)
+        @@KnownElements[eltype] || create_new_element_class(eltype)
       end
-      klass = Class.new(base){|m|
-        @@type = type
-        def type
-          return @@type
+
+      BasicElementMap = []
+
+      def self.obtain_base_class(eltype)
+        BasicElementMap.each do |re,klass|
+          if re.match(eltype)
+            return klass
+          end
         end
-      }
-      # assign name of new class
-      const_set(type,klass)
-      # no automatic register support for dynamic class definition
-      regist(type,klass)
-    end
-
-    def self.parse(line, io)
-      cmd, ops = parse_command(line)
-      unless cmd == "*ELEMENT"
-        raise ArgumentError,"Element.parse can handle *element keyword only."
+        return nil
       end
 
-      type = ops["TYPE"]
-      unless type
-        raise ArgumentError,"element type must be specified."
+      def self.create_new_element_class(eltype)
+        base = obtain_base_class(eltype)
+        if base.nil?
+          raise NameError, "undefinde constant or Unknown element type: #{type}"
+        end
+        klass = Class.new(base){|m|
+          class_variable_set(:@@type, eltype)
+          def m.type
+            return class_variable_get(:@@type)
+          end
+          def type
+            return self.class.type#.class_variable_get(:@@type)
+          end
+        }
+        # assign name of new class
+        const_set(eltype,klass)
+        # no automatic register support for dynamic class definition
+        regist(eltype,klass)
       end
 
-      es = nil
-      setname = ops["ELSET"]
-      if setname
-        es = Abaqus::Elset[setname] || Abaqus::Elset.new(setname)
-      else
-        es = []
-      end
+      def self.parse(line, io, dbg = false)
+        cmd, ops = parse_command(line)
+        unless cmd == "*ELEMENT"
+          raise ArgumentError,"Element.parse can handle *element keyword only."
+        end
 
-      klass = obtain_element_class(type)
-      cmd = ""
-      eids = []
-      cmd = parse_data(io) do |line|
-        es << klass.parse(line,io).i
+        eltype = ops["TYPE"]
+        unless eltype
+          raise ArgumentError,"element type must be specified."
+        end
+
+        es = nil
+        setname = ops["ELSET"]
+        if setname
+          es = Abaqus::Elset[setname] || Abaqus::Elset.new(setname)
+        else
+          es = []
+        end
+
+        klass = obtain_element_class(eltype)
+        puts "#{eltype}:#{klass}" if dbg
+        cmd = ""
+        eids = []
+        cmd = parse_data(io) do |line|
+          es << klass.parse(line,io).i
+        end
+        es.flatten!
+        es.sort!
+        es.uniq!
+        return cmd,es.to_a
       end
-      es.flatten!
-      es.sort!
-      es.uniq!
-      return cmd,es.to_a
     end
   end
-end
 
 end
 
