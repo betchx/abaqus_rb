@@ -1,80 +1,84 @@
 
 unless defined?(ABAQUS_NODE)
   ABAQUS_NODE = true
-require 'abaqus/nset'
-require 'abaqus/inp'
 
-module Abaqus
-  class Node
-    extend Inp
-    attr :i
-    attr :x
-    attr :y
-    attr :z
-    @@maxid = 0
-    UpperLimitID = 9999999
-    def Node.[](i)
-      raise RangeError,"Node Id 0 is not allowed" if i == 0
-      raise RangeError,"Negative Node ID is not allowed" if i < 0
-      raise RangeError,"Given ID of #{i} exceeds limit value of #{UpperLimitID}." if i > UpperLimitID
-      @@all[i]
-    end
-    def Node.add(x,y,z=0.0)
-      Node.new(nextid,x,y,z)
-    end
-    def Node.nextid
-      @@maxid + 1
-    end
-    def Node.size
-      @@all.size
-    end
-    #Maximum ID number
-    def Node.maxid
-      if size == 0
-        nil
-      else
-        size - 1
+  pos = File::dirname(__FILE__)
+
+  require pos + '/nset'
+  require pos + '/inp'
+
+  module Abaqus
+    class Node
+      extend Inp
+      attr :i
+      attr :x
+      attr :y
+      attr :z
       @@all = {}
-      end
-    end
-    def initialize(i,x,y,z=0.0)
-      if i > UpperLimitID
-        raise RangeError,"given id (#{i}) exeeds upper limit (#{UpperLimitID})"
-      end
-      if i < 1
-        raise RangeError,"given id must be greater than zero"
-      end
-      @i = i
-      @x = x
-      @y = y
-      @z = z
-      @@all[i] = self
-      @@maxid = i if @@maxid < i
-    end
-    def Node.clear
-      @@all.clear
-      Nset.clear
       @@maxid = 0
-    end
-    def Node.parse(line,body)
-      keyword, options = parse_command(line)
-      unless keyword == "*NODE"
-        raise ArgumentError, "Node.parse can treat *node keyword only."
+      UpperLimitID = 9999999
+      def Node.[](i)
+        raise RangeError,"Node Id 0 is not allowed" if i == 0
+        raise RangeError,"Negative Node ID is not allowed" if i < 0
+        raise RangeError,"Given ID of #{i} exceeds limit value of #{UpperLimitID}." if i > UpperLimitID
+        @@all[i]
       end
-      ns = nil
-      name = options["NSET"]
-      if name
-        ns = Nset[name] || Nset.new(name)
-      else
-        ns = []
+      def Node.add(x,y,z=0.0)
+        Node.new(nextid,x,y,z)
       end
+      def Node.nextid
+        @@maxid + 1
+      end
+      def Node.size
+        @@all.size
+      end
+      #Maximum ID number
+      def Node.maxid
+        if size == 0
+          nil
+        else
+          size - 1
+        end
+      end
+      def initialize(i,x,y,z=0.0)
+        if i > UpperLimitID
+          raise RangeError,"given id (#{i}) exeeds upper limit (#{UpperLimitID})"
+        end
+        if i < 1
+          raise RangeError,"given id must be greater than zero"
+        end
+        @i = i
+        @x = x
+        @y = y
+        @z = z
+        @@all[i] = self
+        @@maxid = i if @@maxid < i
+      end
+      def Node.clear
+        @@all.clear
+        Nset.clear
+        @@maxid = 0
+      end
+      def Node.parse(line,body)
+        keyword, options = parse_command(line)
+        unless keyword == "*NODE"
+          raise ArgumentError, "Node.parse can treat *node keyword only."
+        end
+        ns = nil
+        name = options["NSET"]
+        if name
+          ns = Nset[name] || Nset.new(name)
+        else
+          ns = []
+        end
 
-      line = parse_data(body) do |str|
-        i,x,y,z = * str.split(/,/)
-        y ||= 0.0
-        z ||= 0.0
-        Node.new(i.to_i,x.to_f,y.to_f,z.to_f)
-        ns << i.to_i if ns
+        line = parse_data(body) do |str|
+          i,x,y,z = * str.split(/,/)
+          y ||= 0.0
+          z ||= 0.0
+          Node.new(i.to_i,x.to_f,y.to_f,z.to_f)
+          ns << i.to_i if ns
+        end
         return line, ns.to_a
       end
     end
@@ -84,6 +88,7 @@ module Abaqus
       return s
     end
   end
+
 end
 
 if $0 == __FILE__
@@ -205,16 +210,16 @@ if $0 == __FILE__
     end
     def test_parse_returns_nil_at_end_of_file
       @body.should_receive(:gets).times(3).and_return("1, 0.0, 0.0, 0.0",
-                                             "2, 0.0, 0.0, 0,0",
-                                             nil)
+                                                      "2, 0.0, 0.0, 0,0",
+                                                      nil)
       res, ids = Abaqus::Node.parse("*node",@body)
       assert_nil(res)
     end
     def test_parse_should_return_created_id_list_as_second_retval
       @body.should_receive(:gets).times(4).and_return("1, 0.0, 0.0",
-                                             "3, 1.0, 0.0",
-                                             "5, 0.0, 1.0",
-                                             nil)
+                                                      "3, 1.0, 0.0",
+                                                      "5, 0.0, 1.0",
+                                                      nil)
       ans = [1,3,5]
       res, ids = Abaqus::Node.parse("*node", @body)
       assert_equal(ans,ids.sort)
