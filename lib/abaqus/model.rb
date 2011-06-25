@@ -108,7 +108,7 @@ if $0 == __FILE__
       assert_not_nil(@m.steps)
     end
     def test_props
-      assert_not_nil(@m.props)
+      assert_not_nil(@m.properties)
     end
     def test_nodes_add
       @m.nodes[0] =  99
