@@ -1,21 +1,26 @@
 
+Dir.chdir( File::dirname(__FILE__))
+
 list = ["abaqus.rb"]
 list << Dir['abaqus/**/*.rb'].to_a
 
-Dir.chdir( File::dirname(__FILE__))
 
 test_dir = "../test/"
 test_abaqus_dir = "../test/abaqus/"
 
-Dir.mkdir(test_dir) unless File.diretory?(test_dir)
-Dir.mkdir(test_abaqus_dir) unless File.diretory?(test_abaqus_dir)
+
+def mkdir_p(dir)
+  parent = File::dirname(dir)
+  p dir, parent
+  unless File::directory?(parent)
+    mkdir_p(parent)
+  end
+  Dir.mkdir(dir) unless File::directory?(dir)
+end
+
+p top_dir = File::expand_path("../")
 
 list.flatten.each do |file|
-  out = open(test_dir + file,"w")
-  out.puts "#! /usr/bin/ruby"
-  out.puts ""
-  out.puts "require '../lib/#{file}'"
-  out.puts
   f = open(file)
   arr = []
   while line = f.gets
@@ -24,14 +29,27 @@ list.flatten.each do |file|
     end
   end
   while line
-    arr << line
+    arr << line.sub(/^  /,'')
     line = f.gets
   end
   f.close
-  until arr.pop.strip.downcase == "end"
-    true
+  unless arr.empty?
+    arr.shift
+    until arr.pop.strip.downcase == "end"
+      true
+    end
+    dir = File.dirname(top_dir + '/test/' + file)
+    unless File.directory?(dir)
+      mkdir_p(dir)
+    end
+    out = open(dir + "/test_" + File::basename(file),"w")
+    out.puts "#! /usr/bin/ruby"
+    out.puts ""
+    out.puts "$LOAD_PATH.unshift '#{top_dir}/lib'"
+    out.puts "require '#{file}'"
+    out.puts
+    out.puts arr.join('')
   end
-  out.puts arr.join('')
 end
 
 
