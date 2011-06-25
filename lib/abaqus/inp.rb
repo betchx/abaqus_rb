@@ -4,7 +4,7 @@ module Abaqus
     module_function
     def parse_command(line)
       unless line =~ /^\*/
-        raise ArgumentError,"given argument seems not to be command."
+        raise ArgumentError,"given argument (#{line}) seems not to be command."
       end
       cmd, *ops = line.upcase.split(/,/).map{|x| x.strip}
       opt = {}
