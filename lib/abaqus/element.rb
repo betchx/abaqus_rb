@@ -202,8 +202,10 @@ if $0 == __FILE__
       assert_equal("S4R5", Abaqus::Element[1].type)
     end
     def test_parse_raise_ArgumentError_when_unknown_type_was_given
-      assert_raise(ArgumentError){
-        Abaqus::Element.parse("*ElemEnt, type=Zero",@str1)
+      assert_raise(NameError){
+        body = flexmock("xx")
+        body.should_receive(:gets).never.and_return(* @str.to_a)
+        Abaqus::Element.parse("*ElemEnt, type=Zero",body)
       }
     end
     def test_multiple_definition_of_element_can_be_parsed_correctly
