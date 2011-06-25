@@ -130,13 +130,15 @@ if $0 == __FILE__
 
     def test_Element_parse_request_command_is_ELEMENT
       assert_raise(ArgumentError) do
-        s = ""
+        s = flexmock("x")
+        s.should_receive(:gets).never.and_return(nil)
         Abaqus::Element.parse("*elem,",s)
       end
     end
     def test_Element_parse_throw_if_type_parameter_was_not_given
       assert_raise(ArgumentError) do
-        s = ""
+        s = flexmock("o")
+        s.should_receive(:gets).once.and_return(nil)
         Abaqus::Element.parse("*Element",s)
       end
     end
