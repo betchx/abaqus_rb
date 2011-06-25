@@ -165,7 +165,6 @@ end
 if $0 == __FILE__
   require 'test/unit'
   require 'flexmock/test_unit'
-  require 'abaqus/inp'
   $static_name = "StaticElement"
   module Abaqus
     class Element
