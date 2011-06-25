@@ -195,7 +195,7 @@ if $0 == __FILE__
     end
     def test_parsed_result_of_S4R5_will_be_subclass_of_S4
       try_parse("*ELEMENT,type=S4R5",@str1)
-      assert_kind_of(Abaqus::Element::S4,Abaqus::Element[1])
+      assert_operator(Abaqus::Element::S4,:===,Abaqus::Element[1])
     end
     def test_parsed_result_of_S4R5_must_have_type_of_S4R5
       try_parse("*ELEMENT,type=S4R5",@str1)
