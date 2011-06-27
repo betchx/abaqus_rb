@@ -241,13 +241,19 @@ if $0 == __FILE__
       }
     end
     def test_can_parse_if_elset_option_was_given
+      assert_not_nil(@cmd)
+      assert_not_nil(@body)
       try_parse(@cmd,@str1)
     end
     def test_elset_was_created_after_parse_with_elset_option
+      assert_not_nil(@cmd)
+      assert_not_nil(@body)
       try_parse(@cmd,@str1)
       assert(Abaqus::Elset[@elset_name])
     end
     def test_elset_must_contain_created_element_id_by_parse
+      assert_not_nil(@cmd)
+      assert_not_nil(@body)
       try_parse(@cmd,@str1)
       assert_equal([1], Abaqus::Elset[@elset_name])
     end
