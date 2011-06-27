@@ -1,9 +1,13 @@
 
+
 Dir.chdir( File::dirname(__FILE__))
 
+if ARGV.empty?
 list = ["abaqus.rb"]
 list << Dir['abaqus/**/*.rb'].to_a
-
+else
+  list = ARGV.map{|f| f.sub(%Q(lib/),'')}
+end
 
 test_dir = "../test/"
 test_abaqus_dir = "../test/abaqus/"
