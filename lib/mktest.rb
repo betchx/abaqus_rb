@@ -46,7 +46,9 @@ list.flatten.each do |file|
     unless File.directory?(dir)
       mkdir_p(dir)
     end
-    out = open(dir + "/test_" + File::basename(file),"w")
+    test_file = dir + "/test_" + File::basename(file)
+    $stderr.puts "#{file} ==> #{test_file}"
+    out = open(test_file,"w")
     out.puts "#! /usr/bin/ruby"
     out.puts ""
     out.puts "$LOAD_PATH.unshift '#{top_dir}/lib'"
