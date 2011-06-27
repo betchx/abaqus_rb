@@ -215,7 +215,7 @@ if $0 == __FILE__
     end
 
   end
-  class TestElsetBase < Test::Unit::TestCase
+  class TestElsetBaseParse < Test::Unit::TestCase
     def setup
       @elset_name = "TestElements"
       @cmd = "*element, type=#{$static_name}, elset=#{@elset_name}"
@@ -242,18 +242,18 @@ if $0 == __FILE__
     end
     def test_can_parse_if_elset_option_was_given
       assert_not_nil(@cmd)
-      assert_not_nil(@body)
+      assert_not_nil(@str1)
       try_parse(@cmd,@str1)
     end
     def test_elset_was_created_after_parse_with_elset_option
       assert_not_nil(@cmd)
-      assert_not_nil(@body)
+      assert_not_nil(@str1)
       try_parse(@cmd,@str1)
       assert(Abaqus::Elset[@elset_name])
     end
     def test_elset_must_contain_created_element_id_by_parse
       assert_not_nil(@cmd)
-      assert_not_nil(@body)
+      assert_not_nil(@str1)
       try_parse(@cmd,@str1)
       assert_equal([1], Abaqus::Elset[@elset_name])
     end
