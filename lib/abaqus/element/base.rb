@@ -115,7 +115,7 @@ unless defined?(ABAQUS_ELEMENT)
       def self.create_new_element_class(eltype)
         base = obtain_base_class(eltype)
         if base.nil?
-          raise NameError, "undefinde constant or Unknown element type: #{type}"
+          raise NameError, "undefinde constant or Unknown element type: #{eltype}"
         end
         klass = Class.new(base){|m|
           class_variable_set(:@@type, eltype)
