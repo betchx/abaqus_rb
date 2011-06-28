@@ -183,6 +183,12 @@ RF
     def test_bcs_exist
       assert( ! @model.bcs.empty? )
     end
+    def test_properties_by_name
+      assert_in_delta(0.1, @model.properties["XY"][0])
+    end
+    def test_material_of_property
+      assert_equal("STEEL", @model.properties["XY"].material)
+    end
 
   end
 end
