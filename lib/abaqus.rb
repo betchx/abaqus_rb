@@ -4,12 +4,13 @@ require 'abaqus/element'
 
 module Abaqus
   KnownKeywords = {
-    "*NODE"    => Node,
-    "*ELEMENT" => Element,
-    "*NSET"    => Nset,
-    "*ELSET"   => Elset,
+    "*NODE"     => Node,
+    "*ELEMENT"  => Element,
+    "*NSET"     => Nset,
+    "*ELSET"    => Elset,
     "*BOUNDARY" => Bc,
     "*MATERIAL" => Material,
+    "*STEP"     => Step,
   }
   Property_Keywords = [
     "*SHELL SECTION" ,
