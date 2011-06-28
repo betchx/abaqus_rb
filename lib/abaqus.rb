@@ -9,6 +9,7 @@ module Abaqus
     "*NSET"    => Nset,
     "*ELSET"   => Elset,
     "*BOUNDARY" => Bc,
+    "*MATERIAL" => Material,
   }
   class SkipParser
     def self.parse(line, body)
