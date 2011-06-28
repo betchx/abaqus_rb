@@ -10,7 +10,7 @@ module Abaqus
       @elsets = {}
       @bcs = {}
       @loads = {}
-      @steps = {}
+      @steps = []  # step must be array to keep order
       @properties = {}
       @materials = {}
     end
