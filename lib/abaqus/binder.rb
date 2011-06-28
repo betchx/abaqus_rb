@@ -25,7 +25,7 @@ unless defined?(ABAQUS_BINDER_RB)
             class_variable_set(:@@all, class_variable_get(:@@old_bind).pop)
           end
           def self.with_bind(model)
-            self.bind(mode)
+            self.bind(model)
             yield
             self.release
           end
