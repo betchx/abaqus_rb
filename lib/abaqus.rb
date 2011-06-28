@@ -11,6 +11,18 @@ module Abaqus
     "*BOUNDARY" => Bc,
     "*MATERIAL" => Material,
   }
+  Property_Keywords = [
+    "*SHELL SECTION" ,
+    "*BEAM SECTION" ,
+    "*SOLID SECTION" ,
+    "*BEAM GENERAL SECTION",
+    "*SPRING",
+    #"",
+  ]
+  Property_Keywords.each do |key|
+    KnownKeywords[key] = Property
+  end
+
   class SkipParser
     def self.parse(line, body)
       line = body.gets
@@ -184,7 +196,7 @@ RF
       assert( ! @model.bcs.empty? )
     end
     def test_properties_by_name
-      assert_in_delta(0.1, @model.properties["XY"][0])
+      assert_in_delta(0.1, @model.properties["XY"][0][0].to_f, 0.001)
     end
     def test_material_of_property
       assert_equal("STEEL", @model.properties["XY"].material)

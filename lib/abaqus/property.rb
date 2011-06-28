@@ -26,7 +26,8 @@ module Abaqus
       res = parse_data(body) do |str|
         vals << str.split(/\s*,\s*/)
       end
-      prop = self.new(elset_name, key, mat, props)
+      # do not flat
+      prop = self.new(elset_name, key, mat, *vals)
       return res, prop
     end
   end
