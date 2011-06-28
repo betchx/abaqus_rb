@@ -46,6 +46,9 @@ module Abaqus
     def bcs
       @bcs||={}
     end
+    def loads
+      @loads ||= {}
+    end
     def initialize(name)
       @name = name
       @@all << self
