@@ -24,7 +24,7 @@ module Abaqus
         line.strip!
         next if line[0,2] == "**"
         break if line[0,1] == "*"
-        yield line
+        yield line if block_given?
       end
       line
     end
