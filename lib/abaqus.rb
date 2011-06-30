@@ -1,6 +1,7 @@
-require 'abaqus/model'
-require 'abaqus/node'
-require 'abaqus/element'
+dir = File::dirname(__FILE__)
+require dir+'/abaqus/model'
+require dir+'/abaqus/node'
+require dir+'/abaqus/element'
 
 module Abaqus
   KnownKeywords = {
