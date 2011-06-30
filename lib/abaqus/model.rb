@@ -13,9 +13,10 @@ module Abaqus
       @steps = []  # step must be array to keep order
       @properties = {}
       @materials = {}
+      @mpcs = {}
     end
     %w(name nodes elements nsets elsets bcs
-       loads steps properties materials).each do |var|
+       loads steps properties materials mpcs).each do |var|
       attr var # remove @
     end
   end
@@ -33,12 +34,13 @@ require pos + '/bc'
 require pos + '/load'
 require pos + '/step'
 require pos + '/material'
+require pos + '/mpc'
 require pos + '/binder'
 
 module Abaqus
   class Model
     BindTargets = [Node, Element, Nset, Elset,
-      Bc, Load, Step, Property, Material]
+      Bc, Load, Step, Property, Material,MPC]
     BindTargets.each do |target|
       Binder.inject_bind_methods(target)
     end
@@ -92,6 +94,9 @@ if $0 == __FILE__
     end
     def test_props
       assert_not_nil(@m.properties)
+    end
+    def test_mpc
+      assert_not_nil(@m.mpcs)
     end
     def test_nodes_add
       @m.nodes[0] =  99
