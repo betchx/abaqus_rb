@@ -2,6 +2,7 @@ dir = File::dirname(__FILE__)
 require dir+'/abaqus/model'
 require dir+'/abaqus/node'
 require dir+'/abaqus/element'
+require dir+'/abaqus/mpc'
 
 module Abaqus
   KnownKeywords = {
@@ -12,6 +13,7 @@ module Abaqus
     "*BOUNDARY" => Bc,
     "*MATERIAL" => Material,
     "*STEP"     => Step,
+    "*MPC"      => MPC,
   }
   Property_Keywords = [
     "*SHELL SECTION" ,
@@ -135,6 +137,8 @@ fix, 1, 6, 0
 *plastic, hardening=kinematic
 0.0, 245.0
 0.15, 400
+*mpc
+BEAM, 1, 22
 *step
 *static
 0.1, 1.0
@@ -202,6 +206,9 @@ RF
     end
     def test_material_of_property
       assert_equal("STEEL", @model.properties["XY"].material)
+    end
+    def test_mpc_size
+      assert_equal(1, @model.mpcs.size)
     end
 
   end
