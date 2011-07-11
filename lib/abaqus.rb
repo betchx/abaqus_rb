@@ -35,8 +35,10 @@ module Abaqus
   def parse(f,name)
     model = Model.new(name)
     model.with_bind do
-      line = f.gets
-      line = f.gets while line[0,2] == "**"
+      line = f.gets or return nil
+      while line[0,2] == "**"
+        line = f.gets  or return nil
+      end
       keywords, opts = Inp.parse_command(line)
       raise "first keyword must be *heading" unless keyword = "*HEADING"
       line = Inp.parse_data(f) {} # skip
