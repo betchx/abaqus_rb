@@ -32,7 +32,7 @@ module Abaqus
     end
   end
   module_function
-  def parse(f,name)
+  def parse(f,name="default_model")
     model = Model.new(name)
     model.with_bind do
       line = f.gets or return nil
