@@ -1,4 +1,4 @@
-unless defined?(ABAQU_MODEL_RB)
+unless defined?(ABAQUS_MODEL_RB)
   ABAQUS_MODEL_RB = true
 
   module Abaqus
