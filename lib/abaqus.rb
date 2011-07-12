@@ -29,8 +29,7 @@ module Abaqus
 
   class SkipParser
     def self.parse(line, body)
-      line = body.gets
-      return nil if line.nil?
+      line = body.gets or return nil
       return Inp.parse_data(body) {}
     end
   end
@@ -38,9 +37,9 @@ module Abaqus
   def parse(f,name="default_model")
     model = Model.new(name)
     model.with_bind do
-      line = f.gets or return nil
+      line = f.gets or break
       while line[0,2] == "**"
-        line = f.gets  or return nil
+        line = f.gets  or break
       end
       keywords, opts = Inp.parse_command(line)
       raise "first keyword must be *heading" unless keyword = "*HEADING"
