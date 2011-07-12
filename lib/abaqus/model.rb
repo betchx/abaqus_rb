@@ -4,17 +4,30 @@ unless defined?(ABAQUS_MODEL_RB)
   module Abaqus
     class Model
       def initialize(name)
-        @name = name
         @elements = {}
         @nodes = {}
         @nsets = {}
         @elsets = {}
         @bcs = {}
         @loads = {}
-        @steps = []  # step must be array to keep order
         @properties = {}
         @materials = {}
         @mpcs = {}
+        self.instance_variables.each do |v|
+          self.instance_variable_get(v).instance_eval{ |o|
+            alias :actref :[]
+            def o.[](key)
+              case key
+              when String
+                actref(key.upcase)
+              else
+                actref(key)
+              end
+            end
+          }
+        end
+        @name = name
+        @steps = []  # step must be array to keep order
       end
       %w(name nodes elements nsets elsets bcs
        loads steps properties materials mpcs).each do |var|
