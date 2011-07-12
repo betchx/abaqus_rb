@@ -4,28 +4,22 @@ unless defined?(ABAQUS_MODEL_RB)
   module Abaqus
     class Model
       def initialize(name)
+        upcase_hash = Hash.new
+        upcase_hash.instance_eval{ |o|
+          alias :actref :[]
+          def [](key)
+            actref(key.upcase)
+          end
+        }
         @elements = {}
         @nodes = {}
-        @nsets = {}
-        @elsets = {}
-        @bcs = {}
-        @loads = {}
-        @properties = {}
-        @materials = {}
+        @nsets = upcase_hash.clone
+        @elsets = upcase_hash.clone
+        @bcs = upcase_hash.clone
+        @loads = upcase_hash.clone
+        @properties = upcase_hash.clone
+        @materials = upcase_hash.clone
         @mpcs = {}
-        self.instance_variables.each do |v|
-          self.instance_variable_get(v).instance_eval{ |o|
-            alias :actref :[]
-            def o.[](key)
-              case key
-              when String
-                actref(key.upcase)
-              else
-                actref(key)
-              end
-            end
-          }
-        end
         @name = name
         @steps = []  # step must be array to keep order
       end
