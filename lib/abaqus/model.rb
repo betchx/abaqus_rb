@@ -1,4 +1,5 @@
-
+unless defined?(ABAQU_MODEL_RB)
+  ABAQUS_MODEL_RB = true
 
 module Abaqus
   class Model
@@ -63,6 +64,7 @@ module Abaqus
   GlobalModel.bind_all
 end
 
+end
 
 if $0 == __FILE__
   require 'test/unit'
