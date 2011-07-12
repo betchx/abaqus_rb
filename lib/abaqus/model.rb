@@ -1,68 +1,68 @@
 unless defined?(ABAQU_MODEL_RB)
   ABAQUS_MODEL_RB = true
 
-module Abaqus
-  class Model
-    def initialize(name)
-      @name = name
-      @elements = {}
-      @nodes = {}
-      @nsets = {}
-      @elsets = {}
-      @bcs = {}
-      @loads = {}
-      @steps = []  # step must be array to keep order
-      @properties = {}
-      @materials = {}
-      @mpcs = {}
-    end
-    %w(name nodes elements nsets elsets bcs
+  module Abaqus
+    class Model
+      def initialize(name)
+        @name = name
+        @elements = {}
+        @nodes = {}
+        @nsets = {}
+        @elsets = {}
+        @bcs = {}
+        @loads = {}
+        @steps = []  # step must be array to keep order
+        @properties = {}
+        @materials = {}
+        @mpcs = {}
+      end
+      %w(name nodes elements nsets elsets bcs
        loads steps properties materials mpcs).each do |var|
-      attr var # remove @
+        attr var # remove @
+       end
     end
+    GlobalModel = Model.new("global")
   end
-  GlobalModel = Model.new("global")
-end
 
-pos = File::dirname(__FILE__)
+  pos = File::dirname(__FILE__)
 
-require pos + '/node'
-require pos + '/nset'
-require pos + '/element'
-require pos + '/elset'
-require pos + '/property'
-require pos + '/bc'
-require pos + '/load'
-require pos + '/step'
-require pos + '/material'
-require pos + '/mpc'
-require pos + '/binder'
+  require pos + '/node'
+  require pos + '/nset'
+  require pos + '/element'
+  require pos + '/elset'
+  require pos + '/property'
+  require pos + '/bc'
+  require pos + '/load'
+  require pos + '/step'
+  require pos + '/material'
+  require pos + '/mpc'
+  require pos + '/binder'
 
-module Abaqus
-  class Model
-    BindTargets = [Node, Element, Nset, Elset,
-      Bc, Load, Step, Property, Material,MPC]
-    BindTargets.each do |target|
-      Binder.inject_bind_methods(target)
-    end
-    def with_bind
-      bind_all
-      yield
-      release_all
-    end
-    def bind_all
-      BindTargets.each do |klass|
-        klass.bind(self)
+  module Abaqus
+    class Model
+      BindTargets = [Node, Element, Nset, Elset,
+        Bc, Load, Step, Property, Material,MPC]
+      BindTargets.each do |target|
+        Binder.inject_bind_methods(target)
+      end
+      def with_bind
+        bind_all
+        yield
+        release_all
+      end
+      def bind_all
+        BindTargets.each do |klass|
+          klass.bind(self)
+        end
+      end
+      def release_all
+        BindTargets.each do |klass|
+          klass.release
+        end
       end
     end
-    def release_all
-      BindTargets.each do |klass|
-        klass.release
-      end
-    end
+    GlobalModel.bind_all
   end
-  GlobalModel.bind_all
-end
 
 end
 
