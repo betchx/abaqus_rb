@@ -18,3 +18,4 @@ Rake::TestTask.new("test" => TEST_FILES){|t|
   t.pattern = 'test/**/test_*.rb'
 }
 
+task :default => :test
