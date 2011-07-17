@@ -87,6 +87,9 @@ unless defined?(ABAQUS_NODE)
       s += ",  #{@z}" unless @z != 0.0
       return s
     end
+    def inspect
+      "#<Abaqus::Node[#{@i}]:#{@x},#{@y},#{@z}>"
+    end
   end
 
 end
