@@ -2,6 +2,24 @@ unless defined?(ABAQUS_MODEL_RB)
   ABAQUS_MODEL_RB = true
 
   module Abaqus
+    module MPC_Access
+      def independent_nodes
+        self.values.map{|x| x.ind}.sort.uniq
+      end
+      def dependent_nodes(nid = nil)
+        if nid
+          self.keys.select{|x| @@all[x].ind == nid}.sort
+        else
+          self.keys.sort
+        end
+      end
+      def inds
+        self.independent_nodes
+      end
+      def deps(nid = nil)
+        self.dependent_nodes(nid)
+      end
+    end
     class Model
       def initialize(name)
         upcase_hash = Hash.new
@@ -20,6 +38,7 @@ unless defined?(ABAQUS_MODEL_RB)
         @properties = upcase_hash.clone
         @materials = upcase_hash.clone
         @mpcs = {}
+        @mpcs.extend MPC_Access
         @name = name
         @steps = []  # step must be array to keep order
       end
@@ -116,6 +135,16 @@ if $0 == __FILE__
     end
     def test_materials
       assert_not_nil(@m.materials)
+    end
+    def test_mpc_dependent_nodes
+      assert_nothing_raised do
+        assert_instance_of(Array, @m.mpcs.dependent_nodes)
+      end
+    end
+    def test_mpc_independent_nodes
+      assert_nothing_raised do
+        assert_instance_of(Array, @m.mpcs.independent_nodes)
+      end
     end
   end
 end
