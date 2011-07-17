@@ -41,8 +41,8 @@ module Abaqus
       while line[0,2] == "**"
         line = f.gets  or break
       end
-      keywords, opts = Inp.parse_command(line)
-      raise "first keyword must be *heading" unless keyword = "*HEADING"
+      keyword, opts = Inp.parse_command(line)
+      raise "first keyword must be *heading" unless keyword == "*HEADING"
       line = Inp.parse_data(f) {} # skip
       while line
         keyword, ops = Inp.parse_command(line)
