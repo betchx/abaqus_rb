@@ -43,7 +43,7 @@ module Abaqus
         end
       else
         line_parser = lambda do |arg|
-          arg.split(/,/).map{|x| x.to_i}
+          arg.chomp(",").split(/,/).map{|x| x.to_i}
         end
       end
       # generate option was given
@@ -163,6 +163,36 @@ if $0 == __FILE__
     end
   end
 
+  class TestParseInpByCAE < Test::Unit::TestCase
+    def setup
+      key = "*Nset, nset=RailA, instance=Stringers-1\n"
+      str = flexmock("inp"){|m|
+	m.should_receive(:gets).and_return(
+	  "42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57\n",
+	  "58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,  70,  71,  72,  73\n",
+	  "74,  75,  76,  77,  78,  79,  80,  81,  82, 377, 378, 379, 380, 381, 382, 383\n",
+	  "384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399\n",
+	  "400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415\n",
+	  "416,\n",
+	  "*Elset, elset=RailA, instance=Stringers-1, generate\n",
+	  nil
+	)
+      }
+      @ans = [    42,  43,  44,  45,  46,  47,  48,  49,
+	50,  51,  52,  53,  54,  55,  56,  57,  58,  59,
+	60,  61,  62,  63,  64,  65,  66,  67,  68,  69,
+	70,  71,  72,  73,  74,  75,  76,  77,  78,  79,
+	80,  81,  82,                     377, 378, 379,
+       380, 381, 382, 383, 384, 385, 386, 387, 388, 389,
+       390, 391, 392, 393, 394, 395, 396, 397, 398, 399,
+       400, 401, 402, 403, 404, 405, 406, 407, 408, 409,
+       410, 411, 412, 413, 414, 415, 416]
+      @key, @ns = Abaqus::Nset::parse(key,str)
+    end
 
+    def test_ns
+      assert_equal(@ans, @ns)
+    end
+
+  end
 end
-
