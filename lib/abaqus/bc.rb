@@ -1,6 +1,5 @@
 
-pos = File.dirname(__FILE__)
-require pos + '/inp'
+require 'abaqus/inp'
 
 # Todo: consider "BC group" for easy modification
 

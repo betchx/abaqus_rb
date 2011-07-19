@@ -2,8 +2,7 @@
 unless defined?(ABAQUS_MATERIAL_RB)
   ABAQUS_MATERIAL_RB = true
 
-dir = File::dirname(__FILE__)
-require dir + "/inp"
+require "abaqus/inp"
 module Abaqus
   class Material
     @@all = {}

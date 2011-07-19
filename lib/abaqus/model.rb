@@ -50,7 +50,7 @@ unless defined?(ABAQUS_MODEL_RB)
     GlobalModel = Model.new("global")
   end
 
-  pos = File::dirname(__FILE__)
+  pos = 'abaqus'
 
   require pos + '/node'
   require pos + '/nset'

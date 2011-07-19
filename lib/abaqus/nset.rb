@@ -1,4 +1,4 @@
-pos = File.dirname(__FILE__)
+pos = "abaqus" #File.dirname(__FILE__)
 require pos + '/inp'
 module Abaqus
   class Nset < Array

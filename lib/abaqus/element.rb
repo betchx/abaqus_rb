@@ -1,5 +1,5 @@
 
-pos = File.dirname(__FILE__)
+pos = 'abaqus' #File.dirname(__FILE__)
 
 require pos + '/element/base'
 require pos + '/element/s4'

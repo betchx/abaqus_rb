@@ -1,7 +1,7 @@
 
-unless defined?(Abaqus::Element::S8)
 unless defined?(Abaqus::Element)
-  require File::dirname(__FILE__)+'/base'
+  #require File::dirname(__FILE__)+'/base'
+  require 'abaqus/element/base'
 end
 
 

@@ -2,7 +2,8 @@
 unless defined?(ABAQUS_ELEMENT_MASS_RB)
   ABAQUS_ELEMENT_MASS_RB = true
 
-  require File::dirname(__FILE__)+"/base" unless defined?(Abaqus::Element)
+  #require File::dirname(__FILE__)+"/base" unless defined?(Abaqus::Element)
+  require 'abaqus/element/base'
 
   class Abaqus::Element::MASS < Abaqus::Element
     def initialize(i,n1)

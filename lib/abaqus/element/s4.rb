@@ -3,7 +3,7 @@
 unless defined?(Abaqus::Element::S4)
 
 
-pos = File::dirname(File::dirname(__FILE__))
+pos = "abaqus"#File::dirname(File::dirname(__FILE__))
 unless defined?(Abaqus::Element)
   #require File::dirname(__FILE__)+'/base'
   require pos + '/element/base'

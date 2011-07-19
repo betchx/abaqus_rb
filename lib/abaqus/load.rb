@@ -2,8 +2,7 @@
 unless defined?(ABAQUS_LOAD_RB)
   ABAQUS_LOAD_RB = true
 
-  dir = File::dirname(__FILE__)
-  require dir + "/inp"
+  require "abaqus/inp"
 
   module Abaqus
     class Load

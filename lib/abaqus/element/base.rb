@@ -2,7 +2,7 @@
 unless defined?(ABAQUS_ELEMENT)
   ABAQUS_ELEMENT= true
 
-  p pos = File.dirname(File.dirname(__FILE__))
+  pos = 'abaqus' #File.dirname(File.dirname(__FILE__))
   #require pos + '/node'
   require pos + '/elset'
   require pos + '/inp'

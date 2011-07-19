@@ -2,10 +2,8 @@
 unless defined?(ABAQUS_NODE)
   ABAQUS_NODE = true
 
-  pos = File::dirname(__FILE__)
-
-  require pos + '/nset'
-  require pos + '/inp'
+  require 'abaqus/nset'
+  require 'abaqus/inp'
 
   module Abaqus
     class Node

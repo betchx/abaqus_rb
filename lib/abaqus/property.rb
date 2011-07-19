@@ -1,5 +1,5 @@
 
-dir = File::dirname(__FILE__)
+dir ="abaqus" # File::dirname(__FILE__)
 require dir + "/inp"
 
 module Abaqus

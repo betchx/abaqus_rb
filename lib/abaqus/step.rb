@@ -1,6 +1,6 @@
 
 
-dir = File::dirname(__FILE__)
+dir = "abaqus" #File::dirname(__FILE__)
 require dir + '/inp'
 
 unless defined?(Abaqus::Model)

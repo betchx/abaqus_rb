@@ -1,8 +1,7 @@
-dir = File::dirname(__FILE__)
-require dir+'/abaqus/model'
-require dir+'/abaqus/node'
-require dir+'/abaqus/element'
-require dir+'/abaqus/mpc'
+require 'abaqus/model'
+require 'abaqus/node'
+require 'abaqus/element'
+require 'abaqus/mpc'
 
 module Abaqus
   KnownKeywords = {

@@ -1,7 +1,7 @@
 
 unless defined?(ABAQUS_MPC_RB)
   ABAQUS_MPC_RB=true
-  dir = File::dirname(__FILE__)
+  dir = 'abaqus' #File::dirname(__FILE__)
   require dir + '/inp'
   module Abaqus
     class MPC
