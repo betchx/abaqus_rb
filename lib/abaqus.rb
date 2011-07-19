@@ -28,7 +28,7 @@ module Abaqus
 
   class SkipParser
     def self.parse(line, body)
-      line = body.gets or return nil
+      #line = body.gets or return nil
       return Inp.parse_data(body) {}
     end
   end
