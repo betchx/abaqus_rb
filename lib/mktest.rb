@@ -32,11 +32,12 @@ list.flatten.each do |file|
       break
     end
   end
+  with_END = false
   while line
+    break if line =~ /^__END__/
     arr << line.sub(/^  /,'')
     line = f.gets
   end
-  f.close
   unless arr.empty?
     arr.shift
     until arr.pop.strip.downcase == "end"
@@ -55,7 +56,12 @@ list.flatten.each do |file|
     out.puts "require '#{file}'"
     out.puts
     out.puts arr.join('')
+    while line
+      out.puts line
+      line = f.gets
+    end
   end
+  f.close
 end
 
 
