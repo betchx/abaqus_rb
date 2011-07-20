@@ -27,6 +27,21 @@ module Abaqus
       while line
         key, opts = parse_command(line)
         case key
+	when "*DYNAMIC"
+	  step.analysis_type = "dynamic"
+	  dynamic_data_line_called =false
+	  line = parse_data(body){|arg|
+	    dt,dur,min_inc, max_inc = arg.split(/,/).map{|x| (x&&x.strip.length >0)?(x.to_f):nil}
+	    if dynamic_data_line_called
+	      raise ArgumentError,"Only one data line is allowed for *Dynamic"
+	    end
+	    dynamic_data_line_called = true
+	    step.dt = dt
+	    step.dur = dur
+	    step.min_inc = min_inc
+	    step.max_inc = max_inc
+	  }
+	  step.error_check(opts)
         when "*END STEP"
           break
         when "*BOUNDARY"
@@ -53,6 +68,44 @@ module Abaqus
       @name = name
       @@all << self
       @num = @@all.size
+    end
+    attr :num
+    attr :dur, true
+    attr :dt, true
+    attr :min_inc, true
+    attr :max_inc, true
+    attr :analysis_type, true
+    attr_reader :is_direct, :is_explicit
+    alias :direct? :is_direct
+    alias :explicit? :is_explicit
+    def error_check(opts)
+      #error check
+      unless dur
+	raise ArgumentError,"duration of step must be specified"
+      end
+      if dur.to_f <= 0.0
+	raise ArgumentError,"duration must be possitive value"
+      end
+      @is_direct = opts['DIRECT']
+      if (@is_explicit = opts['EXPLICIT'] )then
+	if min_inc
+	  raise ArgumentError,"minimum time increment is not available in explicit dynamic"
+	end
+	if direct?
+	  unless dt
+	    raise ArgumentError,'time increment is required for direct dynamic'
+	  end
+	else
+	  if dt
+	    raise ArgumentError,'time incremnt must not be specified for explicit dynamic analysis without direct keyword'
+	  end
+	end
+      else
+	# Implicit dynamic
+	unless dt
+	  raise ArgumentError,'time incement is required for implicit dynamic' unless dt
+	end
+      end
     end
   end
 end
