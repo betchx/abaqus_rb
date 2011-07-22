@@ -58,6 +58,7 @@ module Abaqus
       end
       return line, step
     end
+    def dynamic?() analysis_type == "dynamic" end
     def bcs
       @bcs||={}
     end
@@ -68,6 +69,7 @@ module Abaqus
       @name = name
       @@all << self
       @num = @@all.size
+      @analysis_type = "not dynamic"
     end
     attr :num
     attr :dur, true
