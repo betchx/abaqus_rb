@@ -15,6 +15,20 @@ module Abaqus
       @@all[@key]  ||= []
       @@all[@key] << self
     end
+    FIXED_DOF = {
+      "XSYMM" => [1,5,6],
+      "YSYMM" => [2,4,6],
+      "ZSYMM" => [3,4,5],
+      "ENCASTRE" => (1..6).to_a,
+      "PINNED" => [1,2,3],
+      "XASYMM" => [2,3,4],
+      "YASYMM" => [1,3,5],
+      "ZASYMM" => [1,2,6],
+    }
+    def self.parse_label(arg)
+      fix_dof = FIXED_DOF[arg.strip.upcase] or raise ArgumentError,"対応していない境界条件ラベル(#{arg})があります．入力ファイルを確認してください"
+      fix_dof.map{|x| [x, 0.0]}
+    end
     attr_reader :i, :dof, :value, :params, :key
     def self.parse(line, body)
       key,opts = parse_command(line)
