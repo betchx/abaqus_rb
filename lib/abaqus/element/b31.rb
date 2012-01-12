@@ -31,6 +31,7 @@ unless defined?(ABAQUS_ELEMENT_B31_RB)
     def self.parse(line, io)
       self.new(*parse_line(line).map{|x| x.to_i})
     end
+    Abaqus::Element::BasicElementMap << [/B31/,self]
   end
 end
 
