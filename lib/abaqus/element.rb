@@ -1,12 +1,12 @@
 
 pos = 'abaqus' #File.dirname(__FILE__)
 
-require pos + '/element/base'
-require pos + '/element/s4'
-require pos + '/element/s8'
-require pos + '/element/b31'
-require pos + '/element/mass'
-
+base = pos + '/element/base.rb'
+require base
+list = Dir[File.dirname(__FILE__)+'/element/*.rb']
+list.each do |x|
+  require x
+end
 
 if $0 == __FILE__
   require 'test/unit'
