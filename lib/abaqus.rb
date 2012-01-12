@@ -2,6 +2,7 @@ require 'abaqus/model'
 require 'abaqus/node'
 require 'abaqus/element'
 require 'abaqus/mpc'
+require 'abaqus/system'
 
 module Abaqus
   KnownKeywords = {
@@ -13,6 +14,7 @@ module Abaqus
     "*MATERIAL" => Material,
     "*STEP"     => Step,
     "*MPC"      => MPC,
+    "*SYSTEM"   => System,
   }
   Property_Keywords = [
     "*SHELL SECTION" ,
@@ -35,6 +37,7 @@ module Abaqus
   module_function
   def parse(f,name="default_model")
     model = Model.new(name)
+    Node.reset_converter  # clear system definition
     model.with_bind do
       line = f.gets or break
       while line[0,2] == "**"

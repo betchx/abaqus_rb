@@ -57,6 +57,20 @@ unless defined?(ABAQUS_NODE)
         Nset.clear
         @@maxid = 0
       end
+      @@skip_converter = Object.new
+      def @@skip_converter.convert(x,y,z)
+        [x,y,z]
+      end
+      def Node.converter=(converter)
+        @@converter = converter
+      end
+      def Node.reset_converter
+        @@converter = @@skip_converter
+      end
+      reset_converter
+      def Node.convert(x,y,z)
+        @@converter.convert(x,y,z)
+      end
       def Node.parse(line,body)
         keyword, options = parse_command(line)
         unless keyword == "*NODE"
@@ -74,7 +88,8 @@ unless defined?(ABAQUS_NODE)
           i,x,y,z = * str.split(/,/)
           y ||= 0.0
           z ||= 0.0
-          Node.new(i.to_i,x.to_f,y.to_f,z.to_f)
+          pos = convert(x.to_f, y.to_f, z.to_f)
+          Node.new(i.to_i,*pos)
           ns << i.to_i if ns
         end
         return line, ns.to_a
