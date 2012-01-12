@@ -19,8 +19,13 @@ module Abaqus
       unless name.instance_of?(String)
         raise ScriptError, "First argument of Elset.new must be Elset name (instance of String) "
       end
+      old = @@all[name.upcase]
       @@all[name.upcase] = self
       super(*args)
+      if old
+        self << old
+        self.flatten!
+      end
     end
 
     def Elset.parse(head,body)

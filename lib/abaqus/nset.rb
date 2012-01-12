@@ -18,8 +18,13 @@ module Abaqus
         raise ScriptError, "First argument of Nset.new must be set name of String class"
       end
       @name = name.upcase
+      old = @@all[@name]
       @@all[@name] = self
       super(*args)
+      if old
+        self << old
+        self.flatten!
+      end
     end
     attr_reader :name
     def Nset.parse(head, body)
