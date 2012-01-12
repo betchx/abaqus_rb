@@ -20,3 +20,8 @@ Rake::TestTask.new("test" => TEST_FILES){|t|
 }
 
 task :default => :test
+
+
+task :doc do
+  sh "rdoc -x test -x setup.rb"
+end
