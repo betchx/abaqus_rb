@@ -2,13 +2,17 @@ require 'rake/testtask'
 
 TEST_FILES = FileList.new
 
+ActualElements = 'lib/abaqus/actual_elements.rb'
+SubElements = Dir['lib/abaqus/element/*.rb']
+
+task :default => :element
 
 Dir['lib/**/*.rb'].each do |rbfile|
   a = rbfile.split("/").flatten
   a[0] = "test"
   a[-1] = "test_" + a.last
   test_file = a.join("/")
-  puts "#{test_file} => #{rbfile}"
+  #puts "#{test_file} => #{rbfile}"
   file test_file => [rbfile, "lib/mktest.rb"] do
     sh "ruby lib/mktest.rb #{rbfile}"
   end
@@ -18,18 +22,14 @@ end
 Rake::TestTask.new("test" => TEST_FILES){|t|
   t.pattern = 'test/**/test_*.rb'
 }
+task :element => ActualElements
 
-task :default => :element
-
-task :element => SubElement
-
-SubElements = Dir['lib/abaqus/element/*.rb']
-ActualElements = 'lib/abaqus/actual_elements.rb'
-
-file ActualElements => SubElements do
+file ActualElements => SubElements do |t|
+  puts "Updating #{ActualElements}."
   open(ActualElements,'w') do |out|
-    SubElments.each do |x|
+    SubElements.each do |x|
       out.puts "require 'abaqus/element/#{File.basename(x,'.rb')}'"
+      puts x
     end
   end
 end

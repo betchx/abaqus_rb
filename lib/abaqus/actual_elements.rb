@@ -1,0 +1,5 @@
+require 'abaqus/element/b31'
+require 'abaqus/element/mass'
+require 'abaqus/element/s3'
+require 'abaqus/element/s4'
+require 'abaqus/element/s8'
