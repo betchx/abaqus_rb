@@ -3,3 +3,4 @@
 extra/flexmock-*/
 test/
 doc/
+.bash_history
