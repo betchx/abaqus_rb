@@ -19,8 +19,20 @@ Rake::TestTask.new("test" => TEST_FILES){|t|
   t.pattern = 'test/**/test_*.rb'
 }
 
-task :default => :test
+task :default => :element
 
+task :element => SubElement
+
+SubElements = Dir['lib/abaqus/element/*.rb']
+ActualElements = 'lib/abaqus/actual_elements.rb'
+
+file ActualElements => SubElements do
+  open(ActualElements,'w') do |out|
+    SubElments.each do |x|
+      out.puts "require 'abaqus/element/#{File.basename(x,'.rb')}'"
+    end
+  end
+end
 
 task :doc do
   sh "rdoc -x test -x setup.rb"
