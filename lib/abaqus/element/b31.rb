@@ -1,8 +1,7 @@
 unless defined?(ABAQUS_ELEMENT_B31_RB)
   ABAQUS_ELEMENT_B31_RB = true
 
-  #require File::dirname(__FILE__)+"/base" unless defined?(Abaqus::Element)
-  require 'abaqus/element/base'
+  require 'abaqus/element_base'
 
   class Abaqus::Element::B31 < Abaqus::Element
     def initialize(i,n1,n2)

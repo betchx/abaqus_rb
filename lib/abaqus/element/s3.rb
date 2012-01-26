@@ -2,13 +2,7 @@
 
 unless defined?(Abaqus::Element::S3)
 
-
-pos = "abaqus"#File::dirname(File::dirname(__FILE__))
-unless defined?(Abaqus::Element)
-  #require File::dirname(__FILE__)+'/base'
-  require pos + '/element/base'
-end
-
+require 'abaqus/element_base'
 
 module Abaqus
   class Element

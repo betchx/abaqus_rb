@@ -1,9 +1,7 @@
 
-unless defined?(Abaqus::Element)
-  #require File::dirname(__FILE__)+'/base'
-  require 'abaqus/element/base'
-end
+unless defined?(Abaqus::Element::S8)
 
+require 'abaqus/element_base'
 
 module Abaqus
   class Element
@@ -50,6 +48,8 @@ module Abaqus
       Element::BasicElementMap << [/^S8/,self]
     end
   end
+end
+
 end
 
 
@@ -328,4 +328,5 @@ if $0 == __FILE__
   end
 
 end
+
 
