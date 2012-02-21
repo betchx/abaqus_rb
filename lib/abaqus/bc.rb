@@ -51,8 +51,13 @@ module Abaqus
         args.shift # trash target
         case args.size
         when 1
-          # labeled
-          bcs = parse_label(args[0])
+          if args[0] =~ /\d/
+            # fixed dof
+            bcs = [args[0].to_i]
+          else
+            # labeled
+            bcs = parse_label(args[0])
+          end
         when 3
           u1, u2, val = *args
           u2 = u1 if u2.empty?
