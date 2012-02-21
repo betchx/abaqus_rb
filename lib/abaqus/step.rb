@@ -2,10 +2,12 @@
 
 dir = "abaqus" #File::dirname(__FILE__)
 require dir + '/inp'
+require dir + "/bc"
+require dir + "/load"
 
 unless defined?(Abaqus::Model)
   require dir + '/binder'
-  [Abaqus::BC, ABAQUS::Load].each do |target|
+  [Abaqus::Bc, ABAQUS::Load].each do |target|
     Abaqus::Binder.inject_bind_methods(target)
   end
 end
@@ -45,8 +47,8 @@ module Abaqus
         when "*END STEP"
           break
         when "*BOUNDARY"
-          BC.with_bind(step) do
-            line = BC.parse(line, body)
+          Bc.with_bind(step) do
+            line = Bc.parse(line, body)
           end
         when "*CLOAD","*DLOAD"
           Load.with_bind(step) do
