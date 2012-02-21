@@ -26,6 +26,9 @@ module Abaqus
         break if line[0,1] == "*"
         yield line if block_given?
       end
+      while line =~ /,$/
+        line += io.gets.strip
+      end
       line
     end
   end
