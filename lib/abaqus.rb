@@ -35,7 +35,7 @@ module Abaqus
     end
   end
   module_function
-  def parse(f,name="default_model")
+  def parse(f,name="default_model", check_heading = true)
     model = Model.new(name)
     Node.reset_converter  # clear system definition
     model.with_bind do
@@ -44,7 +44,9 @@ module Abaqus
         line = f.gets  or break
       end
       keyword, opts = Inp.parse_command(line)
-      raise "first keyword must be *heading" unless keyword == "*HEADING"
+      if check_heading
+        raise "first keyword must be *heading" unless keyword == "*HEADING"
+      end
       line = Inp.parse_data(f) {} # skip
       while line
         keyword, ops = Inp.parse_command(line)
