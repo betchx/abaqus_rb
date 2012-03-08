@@ -35,7 +35,7 @@ module Abaqus
     end
   end
   module_function
-  def parse(f,name="default_model", check_heading = true)
+  def parse(f,name="default_model", check_heading = false)
     model = Model.new(name)
     Node.reset_converter  # clear system definition
     model.with_bind do
