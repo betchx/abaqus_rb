@@ -58,15 +58,16 @@ module Abaqus
             # labeled
             bcs = parse_label(args[0])
           end
-        when 3
+        when 2,3
           u1, u2, val = *args
+          val = 0 if val.nil?
           u2 = u1 if u2.empty?
           bcs = []
           u1.to_i.upto(u2.to_i) do |dof|
             bcs << [dof, val.to_f]
           end
         else
-          rase ArgumentError, "*Boundary had wrong data line."
+          raise ArgumentError, "*Boundary had wrong data line."
         end
         target_nodes.each do |nid|
           bcs.each do |bc|
