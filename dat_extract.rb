@@ -19,13 +19,15 @@ class File
 end
 
 ARGV.each do |file|
-  f = open(file)
+  $stderr.puts "DAT file: #{file}"
   base = File::basename(file,".dat")
   dir = File::dirname(file)
   Dir.chdir(dir)
 
   # get model information from input file
   inp = Dir[base + ".inp"].shift # To get actual case of input file
+  $stderr.puts "INP file: #{inp}"
+  f = open(file)
   model = Abaqus::parse(open(inp))
   outs = {}
   nodes = {}
@@ -41,9 +43,11 @@ ARGV.each do |file|
   end until line =~ INC
 
   while line
-    inc = $1
+    inc = line.scan(INC).flatten[0]
     4.times{ line = f.gets }
     t = line.split.pop.to_f
+
+    $stderr.print sprintf("\rinc %5d  time: %g", inc, t)
 
 
     line = f.skip
@@ -227,6 +231,11 @@ ARGV.each do |file|
 
   f.close
 
+  $stderr.puts
+
 end
 
+
+$stderr.puts "Finished.  Press Enter to exit"
+$stdin.gets
 
