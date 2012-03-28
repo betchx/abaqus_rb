@@ -2,7 +2,9 @@
 # coding: Shift_JIS
 
 INC = /INCREMENT +(\d+) SUMMARY/ ;
-FIN = /THE ANALYSIS HAS BEEN COMPLETED/
+FIN = /THE ANALYSIS HAS BEEN COMPLETED/;
+FIN2 = /ANALYSIS COMPLETE/;
+
 
 require 'abaqus'
 
@@ -24,7 +26,6 @@ ARGV.each do |file|
   inp = Dir[base + ".inp"].shift # To get actual case of input file
   model = Abaqus::parse(open(inp))
   outs = {}
-  is_integ={}
   nodes = {}
   elems = {}
 
@@ -52,6 +53,7 @@ ARGV.each do |file|
       break if line =~/N O D E   O U T P U T/;
       break if line =~ INC
       break if line =~ FIN
+      break if line =~ FIN2
       #      $stderr.puts "line : '#{line}'"
       raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
       name = line.split.pop
@@ -99,6 +101,7 @@ ARGV.each do |file|
     end
 
     break if line =~ FIN
+    break if line =~ FIN2
     next if line =~ INC
     unless line =~ /N O D E/
       $stderr.puts line
@@ -108,6 +111,7 @@ ARGV.each do |file|
     begin
       break if line =~ INC
       break if line =~ FIN
+      break if line =~ FIN2
       #$stderr.puts line
       name = line.split.pop
       name = f.gets.strip if name == "SET"
@@ -151,6 +155,7 @@ ARGV.each do |file|
     end while line = f.skip
 
     break if line =~ FIN
+    break if line =~ FIN2
 
   end
 
