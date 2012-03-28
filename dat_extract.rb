@@ -11,10 +11,13 @@ require 'abaqus'
 class File
   def skip
     begin
-      wk = self.gets.strip
-    end while wk.empty?
-#    $stderr.puts "File::Next '#{wk}'"
-    return wk
+      wk = self.gets
+      return nil unless wk
+      $step += 1 if wk =~ /  S T E P  /
+    end while wk.strip.empty?
+    #$stderr.puts "File::Next '#{wk}'"
+    return wk.strip
+
   end
 end
 
@@ -35,6 +38,9 @@ ARGV.each do |file|
 
   # Create output directory
   Dir::mkdir(base) unless FileTest::directory?(base)
+
+  # reset step counter
+  $step = 0
 
   # Skip to first increment
   begin
@@ -188,7 +194,13 @@ ARGV.each do |file|
       unless out
         out = open("#{base}/#{name}.csv","w")
         outs[name] = out
-        nodes[name] = model.nsets[name] or raise "Node set '#{name}' does not fount"
+        if model.nsets[name]
+          nodes[name] = model.nsets[name].sort
+        elsif model.steps[$step-1].nsets[name]
+          nodes[name] = model.steps[$step-1].nsets[name].sort
+        else
+          raise "Node set '#{name}' does not found"
+        end
         out.print "time"
         nodes[name].each do |nid|
           heads.each do |h|

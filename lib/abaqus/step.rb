@@ -54,6 +54,14 @@ module Abaqus
           Load.with_bind(step) do
             line = Load.parse(line, body)
           end
+        when "*NSET"
+          Nset.with_bind(step) do
+            line,ns = Nset.parse(line,body)
+          end
+        when "*ELSET"
+          Elset.with_bind(step) do
+            line, es = Elset.parse(line,body)
+          end
         else
           line = parse_data(body)
         end
@@ -67,8 +75,23 @@ module Abaqus
     def loads
       @loads ||= {}
     end
+    def nsets
+      @nsets ||= {}
+    end
+    def elsets
+      @elsets ||= {}
+    end
     def initialize(name)
+      upcase_hash = Hash.new
+      upcase_hash.instance_eval{ |o|
+        alias :actref :[]
+        def [](key)
+          actref(key.upcase)
+        end
+      }
       @name = name
+      @nsets = upcase_hash.clone
+      @elsets = upcase_hash.clone
       @@all << self
       @num = @@all.size
       @analysis_type = "not dynamic"
