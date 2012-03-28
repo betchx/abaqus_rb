@@ -56,47 +56,104 @@ ARGV.each do |file|
       break if line =~ FIN2
       #      $stderr.puts "line : '#{line}'"
       raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
-      name = line.split.pop
-      name = f.gets.strip if name == "SET"
-      raise "wrong name of '#{name}' at #{t} line: #{f.lineno}" if name =~/ /
+      elname = line.split.pop
+      until (wk = f.gets.strip).empty?
+        elname = wk.strip.split.pop
+      end
+      name = elname
+      raise "wrong name of '#{elname}' at #{t} line: #{f.lineno}" if elname =~/ /
+      point = nil
+      heads = nil
+      case line
+      when /AT THE INTEGRATION POINTS/
+        name = elname + "-ip"
+        point = :integ
+        heads = f.skip.strip.split[4..-1]
+      when /AT THE CENTROID OF THE ELEMENT/
+        name = elname + "-ec"
+        point = :center
+        heads = f.skip.strip.split[3..-1]
+      when /AT THE NODE OF/ # maybe element nodes
+        name = elname + "-en"
+        point = :elnode
+        heads = f.skip.strip.split[4..-1]
+      else
+        raise "Not supported output type for elset #{elname}"
+      end
       out = outs[name]
-      heads = f.skip.strip.split[4..-1]
       if out.nil?
         out = open("#{base}/#{name}.csv","w")
         outs[name] = out
-        unless model.elsets[name]
-          raise "Element set '#{name}' does not found"
+
+        if model.elsets[elname]
+          elems[elname] = model.elsets[elname].sort
+        elsif model.steps[$step-1].elsets[elname]
+          elems[elname] = model.steps[$step-1].elsets[elname].sort
+        else
+          raise "Element set '#{elname}' does not found"
         end
-        elems[name] = model.elsets[name].sort
         out.print "time"
         heads.each do |h|
-          elems[name].each do |e|
-            1.upto(4) do |pt|
+          elems[elname].each do |e|
+            case point
+            when :integ
+              1.upto(4) do |pt|
+                [1,5].each do |sec|
+                  out.print ",#{h}@e#{e}-pt#{pt}-sp#{sec}"
+                end
+              end
+            when :center
               [1,5].each do |sec|
-                out.print ",#{h}@#{e}-#{pt}-#{sec}"
+                out.print ",#{h}@e#{e}-sp#{sec}"
+              end
+            when :elnode
+              nodes = model.elements(e).nodes.sort
+              nodes.each do |n|
+                [1,5].each do |sec|
+                  out.print ",#{h}@e#{e}-n#{n}-sp#{sec}"
+                end
               end
             end
           end
         end
         out.puts
       end
-      2.times{f.gets}
+      1.times{f.gets}
       out.print t
       line = f.skip
-      if line =~ /ALL VALUES/
-        (heads.size * elems[name].size * 8).times{out.print ",0"}
-        out.puts
-      else
-        res = {}
-        begin
-          eid, pt, sec, *val = line.split
-          res[[eid,pt,sec]] = val
-        end until (line = f.gets.strip).empty?
-        res.keys.sort.each do |k|
-          out.print ",#{res[k]}"
+      case point
+      when :integ, :elnode
+        if line =~ /ALL VALUES/
+          (heads.size * elems[elname].size * 8).times{out.print ",0"}
+          out.puts
+        else
+          res = {}
+          begin
+            eid, pt, sec, *val = line.split
+            res[[eid,pt,sec]] = val
+          end until (line = f.gets.strip).empty?
+          res.keys.sort.each do |k|
+            out.print ",#{res[k]}"
+          end
+          out.puts
+          5.times{f.gets}
         end
-        out.puts
-        5.times{f.gets}
+      when :center
+        if line =~ /ALL VALUES/
+          (heads.size * elems[elname].size * 2).times{out.print ",0"}
+          out.puts
+        else
+          res = {}
+          begin
+            eid, sec, *val = line.split
+            res[[eid, sec]] = val
+          end until (line = f.gets.strip).empty?
+          res.keys.sort.each do |k|
+            out.print ",#{res[k]}"
+          end
+          out.puts
+          5.times{f.gets}
+        end
       end
     end
 
@@ -113,8 +170,11 @@ ARGV.each do |file|
       break if line =~ FIN
       break if line =~ FIN2
       #$stderr.puts line
-      name = line.split.pop
-      name = f.gets.strip if name == "SET"
+      wk = line
+      begin
+        name = wk.split.pop
+        wk = f.gets.strip
+      end until wk.empty?
       raise if name =~ / /;
       out = outs[name]
       line = f.skip
