@@ -19,13 +19,19 @@ end
 ARGV.each do |file|
   f = open(file)
   base = File::basename(file,".dat")
-  inp = base + ".inp"
-  model = Abaqus::parse(open(inp))
 
+  # get model information from input file
+  inp = Dir[base + ".inp"].shift # To get actual case of input file
+  model = Abaqus::parse(open(inp))
   outs = {}
+  is_integ={}
   nodes = {}
   elems = {}
 
+  # Create output directory
+  Dir::mkdir(base) unless FileTest::directory?(base)
+
+  # Skip to first increment
   begin
     line = f.gets
     raise if line.nil?
@@ -54,7 +60,7 @@ ARGV.each do |file|
       out = outs[name]
       heads = f.skip.strip.split[4..-1]
       if out.nil?
-        out = open("#{base}-#{name}.csv","w")
+        out = open("#{base}/#{name}.csv","w")
         outs[name] = out
         unless model.elsets[name]
           raise "Element set '#{name}' does not found"
@@ -110,7 +116,7 @@ ARGV.each do |file|
       line = f.skip
       heads = line.strip.split[2..-1]
       unless out
-        out = open("#{base}-#{name}.csv","w")
+        out = open("#{base}/#{name}.csv","w")
         outs[name] = out
         nodes[name] = model.nsets[name] or raise "Node set '#{name}' does not fount"
         out.print "time"
