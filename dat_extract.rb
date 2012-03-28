@@ -21,6 +21,8 @@ end
 ARGV.each do |file|
   f = open(file)
   base = File::basename(file,".dat")
+  dir = File::dirname(file)
+  Dir.chdir(dir)
 
   # get model information from input file
   inp = Dir[base + ".inp"].shift # To get actual case of input file
