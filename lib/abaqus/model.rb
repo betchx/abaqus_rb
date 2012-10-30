@@ -90,7 +90,7 @@ unless defined?(ABAQUS_MODEL_RB)
       # set property reference into elements
       def expand_properties
         @properties.each do |key,value|
-          value.expand_to_element
+          value.expand_to_element self
         end
       end
     end

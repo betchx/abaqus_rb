@@ -8,10 +8,12 @@ module Abaqus
     def initialize(elset_name, key, material, *values)
       @name = elset_name
       @material = material
+      @key = key
       @values = values
       @@all[@name] = self
     end
-    attr_reader :name, :material
+    attr_reader :name, :material, :key
+
     def [](i)
       return @values[i]
     end
@@ -20,7 +22,7 @@ module Abaqus
     def self.parse(head, body)
       key, opts = parse_command(head)
       elset_name = opts["ELSET"]
-      raise if elset_name.nil?
+      raise "No elset was given (#{head})" if elset_name.nil?
       mat = opts["MATERIAL"] || ""
       vals = []
       res = parse_data(body) do |str|
@@ -35,7 +37,11 @@ module Abaqus
     # 処理が重いと思われるので，必要なければ行わない
     def expand_to_element(model = GlobalModel)
       mat = model.materials[@material]
-      model.elsets[@name].each do |x|
+      elset = model.elsets[@name]
+      if elset.nil?
+        raise "Element set with name of #{@name} was not found"
+      end
+      elset.each do |x|
         e = model.elements[x]
         unless e.property.nil?
           prop = e.property
