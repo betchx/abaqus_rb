@@ -47,25 +47,43 @@ module Abaqus
       contents = []
       while res = parse_data(body){|line| contents << line}
         key, ops = parse_command(res)
-        if SubKeywords.include?(key)
-          contents << res
-        else
-          break
-        end
+        break unless  SubKeywords.include?(key)
+        contents << res
       end
       mat = self.new(name,contents)
       return res, mat
     end
+
     def initialize(name, cont=nil)
       @contents = cont
       @name = name
       @@all[name] = self
+      parse_contents
     end
-    attr :name
+    attr_reader :name, :elastic_modulus, :poison_rate, :density
+
+    # Parse Material definition
+    def parse_contents
+      if @contents
+        a = @contents.dup
+        def a.gets
+          self.shift
+        end
+        while res = Inp.parse_data(a)
+          key, ops = Inp.parse_command(res)
+          case key
+          when "*ELASTIC"
+            @elastic_modulus, @poison_rate = a.gets.split(/,/)[0..1].map{|x| x.to_f}
+          when "*DENSITY"
+            @density = a.gets.split(/,/).shift.to_f
+          end
+        end
+      end
+    end
   end
 end
 
-end
+end  #unless defined?
 
 if $0 == __FILE__
   require 'test/unit'
@@ -88,20 +106,36 @@ if $0 == __FILE__
       @poison = 0.3
       @name = "TMAT"
       @head = "*MATERIAL, NAME=#{@name}"
+      @dens = 7.6
       str = <<-NNN
 *elastic
 #{@young}, #{@poison}
 *plastic, hardening=kinematic
 0.0, 230.
 0.15, 400.
+*density
+#{@dens}
+*STEP
       NNN
-      @body.should_receive(:gets).and_return(str.to_s)
+      @body.should_receive(:gets).and_return(*str.to_a)
     end
     def teardown
     end
     def test_parse_material_name
       line, mat = Abaqus::Material.parse(@head,@body)
       assert_equal(@name, mat.name)
+    end
+    def test_elastic_modulus
+      line, mat = Abaqus::Material.parse(@head,@body)
+      assert_in_delta(@young, mat.elastic_modulus,0.1)
+    end
+    def test_poison_rate
+      line, mat = Abaqus::Material.parse(@head,@body)
+      assert_in_delta(@poison, mat.poison_rate, 0.001)
+    end
+    def test_density
+      line, mat = Abaqus::Material.parse(@head,@body)
+      assert_in_delta(@dens, mat.density, 0.001)
     end
   end
 end
