@@ -87,15 +87,14 @@ unless defined?(ABAQUS_MODEL_RB)
           klass.release
         end
       end
-    end
-    GlobalModel.bind_all
-
-    # set property reference into elements
-    def expand_properties
-      @properties.each do |key,value|
-        value.expand_to_element
+      # set property reference into elements
+      def expand_properties
+        @properties.each do |key,value|
+          value.expand_to_element
+        end
       end
     end
+    GlobalModel.bind_all
   end
 
 end
