@@ -48,6 +48,7 @@ unless defined?(ABAQUS_MODEL_RB)
        end
     end
     GlobalModel = Model.new("global")
+
   end
 
   pos = 'abaqus'
@@ -88,6 +89,13 @@ unless defined?(ABAQUS_MODEL_RB)
       end
     end
     GlobalModel.bind_all
+
+    # set property reference into elements
+    def expand_properties
+      @properties.each do |key,value|
+        value.expand_to_element
+      end
+    end
   end
 
 end

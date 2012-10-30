@@ -30,5 +30,32 @@ module Abaqus
       prop = self.new(elset_name, key, mat, *vals)
       return res, prop
     end
+
+    # 各エレメントにプロパティへの参照を追加する．
+    # 処理が重いと思われるので，必要なければ行わない
+    def expand_to_element(model = GlobalModel)
+      mat = model.materials[@material]
+      model.elsets[@name].each do |x|
+        e = model.elements[x]
+        unless e.property.nil?
+          prop = e.property
+          raise "Multiple Property definition for Element ID #{x} \n" +
+            "  OLD property: #{prop.neme} (#{prop.material}) \n" +
+          "  NEW property: #{@name} (#{@material}) \n"
+        else
+          e.property = self
+          e.material = mat
+        end
+      end
+    end
+
+    # 各エレメントに全プロパティへの参照を追加する．
+    # 処理が重いと思われるので，必要なければ行わない
+    def self.expand_to_element
+      @@all.each do |key,value|
+        value.expand_to_element
+      end
+    end
+
   end
 end

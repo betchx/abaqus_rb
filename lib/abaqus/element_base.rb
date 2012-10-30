@@ -27,6 +27,7 @@ unless defined?(ABAQUS_ELEMENT)
         raise "Abaqus::Element.new is not allowed. Use sub classes instead"
       end
       attr_reader :i, :nodes
+      attr_accessor :property, :material
 
       @@all = {}
       @@maxid = 0
