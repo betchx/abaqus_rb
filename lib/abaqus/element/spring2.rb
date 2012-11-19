@@ -30,7 +30,7 @@ unless defined?(ABAQUS_ELEMENT_SPRING2_RB)
     def self.parse(line, io)
       self.new(*parse_line(line).map{|x| x.to_i})
     end
-    Abaqus::Element::BasicElementMap << [/Spring2/,self]
+    Abaqus::Element::BasicElementMap << [/SPRING2/,self]
   end
 end
 
