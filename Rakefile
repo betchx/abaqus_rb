@@ -37,3 +37,10 @@ end
 task :doc do
   sh "rdoc -x test -x setup.rb"
 end
+
+
+task :dat_extract do
+  sh "ruby -I lib -r exerb/mkexy  dat_extract.rb"
+  sh "exerb -c cui dat_extract.exy"
+  sh "rm dat_extract.exy"
+end
