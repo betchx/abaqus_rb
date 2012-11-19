@@ -1,5 +1,6 @@
 require 'abaqus/element/b31'
 require 'abaqus/element/b33'
+require 'abaqus/element/spring2'
 require 'abaqus/element/mass'
 require 'abaqus/element/s3'
 require 'abaqus/element/s4'
