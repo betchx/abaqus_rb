@@ -26,9 +26,18 @@ module Abaqus
       step = self.new(name)
       # step has no data line
       line = parse_data(body)
-      while line
+      iostack = [body]
+      until iostack.empty?
+       body = iostack.pop
+       while line
         key, opts = parse_command(line)
         case key
+        when "*INCLUDE"
+          fname = opts['INPUT']
+          iostack.push body
+          $stderr.puts "Including #{fname} in step #{name} "
+          body = open(fname)
+          line = parse_data(body)
         when "*DYNAMIC"
           step.analysis_type = "dynamic"
           dynamic_data_line_called =false
@@ -65,6 +74,7 @@ module Abaqus
         else
           line = parse_data(body)
         end
+       end
       end
       return line, step
     end

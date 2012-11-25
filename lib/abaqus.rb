@@ -5,6 +5,7 @@ require 'abaqus/mpc'
 require 'abaqus/system'
 
 module Abaqus
+
   KnownKeywords = {
     "*NODE"     => Node,
     "*ELEMENT"  => Element,
@@ -34,25 +35,41 @@ module Abaqus
       return Inp.parse_data(body) {}
     end
   end
+  
+  
   module_function
-  def parse(f,name="default_model", check_heading = false)
+  def parse(f_global,name="default_model", check_heading = false)
     model = Model.new(name)
     Node.reset_converter  # clear system definition
+    iostack = [f_global] # stack of io due to *INCLUDE
     model.with_bind do
+     until iostack.empty?
+      f = iostack.pop
       line = f.gets or break
       while line[0,2] == "**"
         line = f.gets  or break
       end
       if check_heading
+        check_heading = false # only for first check
         keyword, opts = Inp.parse_command(line)
         raise "first keyword must be *heading" unless keyword == "*HEADING"
         line = Inp.parse_data(f) {} # skip
       end
       while line
         keyword, ops = Inp.parse_command(line)
-        klass = KnownKeywords[keyword] || SkipParser
-        line, args = klass.parse(line, f)
+        #check include
+        if keyword =~ /\*INCLUDE/i
+          fname = ops['INPUT']
+          iostack.push f
+          $stderr.puts "Including #{fname} in model definition."
+          f = open(fname)
+          line =f.gets
+        else
+          klass = KnownKeywords[keyword] || SkipParser
+          line, args = klass.parse(line, f)
+        end
       end
+     end
     end
     return model
   end
