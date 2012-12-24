@@ -31,6 +31,7 @@ unless defined?(ABAQUS_ELEMENT_MASS_RB)
     def self.parse(line, io)
       self.new(*parse_line(line).map{|x| x.to_i})
     end
+    Abaqus::Element::BasicElementMap << [/MASS/,self]
   end
 end
 
