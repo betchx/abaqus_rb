@@ -1,7 +1,12 @@
+pos = 'abaqus'
+
+require pos + '/upcasehash'
+
 unless defined?(ABAQUS_MODEL_RB)
   ABAQUS_MODEL_RB = true
 
   module Abaqus
+
     module MPC_Access
       def independent_nodes
         self.values.map{|x| x.ind}.sort.uniq
@@ -22,13 +27,8 @@ unless defined?(ABAQUS_MODEL_RB)
     end
     class Model
       def initialize(name)
-        upcase_hash = Hash.new
-        upcase_hash.instance_eval{ |o|
-          alias :actref :[]
-          def [](key)
-            actref(key.upcase)
-          end
-        }
+        upcase_hash = UpcaseHash.new
+
         @elements = {}
         @nodes = {}
         @nsets = upcase_hash.clone
