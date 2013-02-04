@@ -31,6 +31,8 @@ unless defined?(ABAQUS_MODEL_RB)
 
         @elements = {}
         @nodes = {}
+        @parts = upcase_hash.clone
+        @instances = upcase_hash.clone
         @nsets = upcase_hash.clone
         @elsets = upcase_hash.clone
         @bcs = upcase_hash.clone
@@ -51,12 +53,12 @@ unless defined?(ABAQUS_MODEL_RB)
 
   end
 
-  pos = 'abaqus'
-
   require pos + '/node'
   require pos + '/nset'
   require pos + '/element'
   require pos + '/elset'
+  require pos + '/part'
+  require pos + '/instance'
   require pos + '/property'
   require pos + '/bc'
   require pos + '/load'
