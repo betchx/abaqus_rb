@@ -25,14 +25,54 @@ unless defined?(ABAQUS_MODEL_RB)
         self.dependent_nodes(nid)
       end
     end
+
+    class ElementHash < UpcaseHash
+      def initialize(instances)
+        @instances = instances
+      end
+      def [](key)
+        res = super
+        unless res
+          name, eid = key.upcase.split(/\./)
+          if eid
+            inst = @instances[name]
+            if inst
+              res = inst.element(eid.to_i)
+            end
+          end
+        end
+        res
+      end
+    end
+
+    class NodeHash < UpcaseHash
+      def initialize(instances)
+        @instances = instances
+      end
+      def [](key)
+        key
+        nd = super
+        unless nd
+          name, nid = key.upcase.split(/\./)
+          if nid
+            if inst = @instances[name]
+              nd = inst.node(nid.to_i)
+            end
+          end
+        end
+        nd
+      end
+    end
+
+    ########################################################################
     class Model
       def initialize(name)
         upcase_hash = UpcaseHash.new
 
-        @elements = {}
-        @nodes = {}
-        @parts = upcase_hash.clone
         @instances = upcase_hash.clone
+        @elements = ElementHash.new(@instances)
+        @nodes = NodeHash.new(@instances)
+        @parts = upcase_hash.clone
         @nsets = upcase_hash.clone
         @elsets = upcase_hash.clone
         @bcs = upcase_hash.clone
@@ -44,7 +84,7 @@ unless defined?(ABAQUS_MODEL_RB)
         @name = name
         @steps = []  # step must be array to keep order
       end
-      %w(name nodes elements nsets elsets bcs
+      %w(name nodes elements nsets elsets bcs parts instances
        loads steps properties materials mpcs).each do |var|
         attr var # remove @
        end
@@ -53,23 +93,24 @@ unless defined?(ABAQUS_MODEL_RB)
 
   end
 
+  require pos + '/binder'
+
   require pos + '/node'
   require pos + '/nset'
   require pos + '/element'
   require pos + '/elset'
+  require pos + '/property'
   require pos + '/part'
   require pos + '/instance'
-  require pos + '/property'
   require pos + '/bc'
   require pos + '/load'
   require pos + '/step'
   require pos + '/material'
   require pos + '/mpc'
-  require pos + '/binder'
 
   module Abaqus
     class Model
-      BindTargets = [Node, Element, Nset, Elset,
+      BindTargets = [Node, Element, Nset, Elset, Part, Instance,
         Bc, Load, Step, Property, Material,MPC]
       BindTargets.each do |target|
         Binder.inject_bind_methods(target)
@@ -103,6 +144,8 @@ end
 
 if $0 == __FILE__
   require 'test/unit'
+  require 'flexmock'
+
   class TestModel < Test::Unit::TestCase
     def setup
       @name = "TestModel"
