@@ -17,8 +17,13 @@ unless defined?(ABAQUS_ELEMENT)
         end
         case args[0]
         when String
+          if args[0] =~  /\./
+            # full name case
+            return super
+          end
           element_type = args.shift
-          return obtain_element_class(element_type).new(*args,&blocks)
+          klass = obtain_element_class(element_type)
+          return klass.new(*args,&blocks)
         else
           return super
         end
@@ -54,7 +59,10 @@ unless defined?(ABAQUS_ELEMENT)
 
       def assign(eid,element)
         @@all[eid] = element
-        @@maxid = eid if @@maxid < eid
+        case eid
+        when Integer
+          @@maxid = eid if @@maxid < eid
+        end
       end
       private :assign
 
@@ -63,16 +71,19 @@ unless defined?(ABAQUS_ELEMENT)
       end
 
       def self.[](i)
-        if i < 0
-          raise IndexError,"Negative element ID is not allowed"
+        case i
+        when Integer
+          if i < 0
+            raise IndexError,"Negative element ID is not allowed"
+          end
+          if i == 0
+            raise IndexError,"EID 0 is not allowed now"
+          end
+          if i > @@all.size
+            raise IndexError,"Specified id of #{i} exeeds used id number"
+          end
         end
-        if i == 0
-          raise IndexError,"EID 0 is not allowed now"
-        end
-        if i > @@all.size
-          raise IndexError,"Specified id of #{i} exeeds used id number"
-        end
-        @@all[i] or raise IndexError,"EID #{i} is not used."
+        @@all[i] # or raise IndexError,"EID #{i} is not used."
       end
       def self.const_missing(name)
         obtain_element_class(name)

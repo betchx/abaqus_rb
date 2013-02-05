@@ -39,28 +39,45 @@ module Abaqus
         raise ArgumentError, "ELSET option was not given"
       end
       set = Abaqus::Elset.new(name)
-      if ops["GENERATE"]
-        cmd = parse_data(body) do |line|
-          a = line.split(/,/)
-          case a.size
-          when 3
-            b,e,s = * a.map{|x| x.to_i}
-          when 2
-            b,e = * a.map{|x| x.to_i}
-            s = 1
-          else
-            raise ArgumentError,"Each line must have 2 or 3 items."
+      if instance = ops["INSTANCE"]
+        if ops["GENERATE"]
+          cmd = parse_data(body) do |line|
+            b,e,s = line.strip.chomp(",").split(/,/)
+            s ||= 1
+            b.to_i.step(e.to_i, s.to_i){|i| set << "#{instance}.#{i}"}
           end
-          b.step(e,s){|i| set << i}
+        else
+          cmd = parse_data(body)do |line|
+            set << line.chomp(",").split(/,/).map{|x| "#{instance}.#{x.strip}"}
+          end
         end
       else
-        cmd = parse_data(body)do |line|
-          set << line.split(/,/).map{|x| x.to_i}
+        if ops["GENERATE"]
+          cmd = parse_data(body) do |line|
+            if line.strip =~ /^\d+\s*,/
+              b,e,s = *line.strip.chomp(",").split(/,/)
+              s ||= 1
+              b.to_i.step(e.to_i, s.to_i){|i| set << i}
+            else
+              n,b,x,e,s = *line.strip.chomp(",").split(/[,.]/)
+              s ||= 1
+              n.upcase!
+              b.to_i.step(e.to_i, s.to_i){|i| set << "#{n}.#{i}"}
+            end
+          end
+        else
+          cmd = parse_data(body)do |line|
+            if line.strip =~ /^\d+\s*,/
+              set << line.chomp(",").split(/,/).map{|x| x.to_i}
+            else
+              set << line.chomp(",").upcase.split(/,/).map{|x| x.strip}
+            end
+          end
         end
-        set.flatten!
-        set.sort!
-        set.uniq!
       end
+      set.flatten!
+      set.sort!
+      set.uniq!
       return cmd
     end
   end
@@ -172,10 +189,32 @@ if $0 == __FILE__
       assert_equal([1,2,3,4,5],Abaqus::Elset["gene"])
     end
     def test_generate_option_with_three_column
-      @body.should_receive(:gets).twice.and_return("1,7,2",nil)
+      @body.should_receive(:gets).twice.and_return("1 , 7 , 2",nil)
       Abaqus::Elset.parse("*elset, elset=g3,generate",@body)
       assert_equal([1,3,5,7], Abaqus::Elset["g3"])
     end
+    def test_fullname
+      @body.should_receive(:gets).twice.and_return("Part1-1.3 , Part1-1.5",nil)
+      Abaqus::Elset.parse("*elset, elset=full",@body)
+      assert_equal(["Part1-1.3","Part1-1.5"], Abaqus::Elset["full"])
+    end
+    def test_with_instance
+      @body.should_receive(:gets).twice.and_return( " 1 , 3 , 5 , 7", nil)
+      Abaqus::Elset.parse("*elset, elset=full-in, instance=Inst",@body)
+      assert_equal(%w(INST.1 INST.3 INST.5 INST.7), Abaqus::Elset["full-in"])
+    end
+    def test_gen_with_instance
+      @body.should_receive(:gets).twice.and_return(" 1, 7, 2", nil)
+      Abaqus::Elset.parse("*elset, elset=gi, generate, instance=ig", @body)
+      assert_equal(%w(IG.1 IG.3 IG.5 IG.7), Abaqus::Elset["gi"])
+    end
+    def test_gen_with_fullname
+      @body.should_receive(:gets).twice.and_return("IX.1, IX.7, 2", nil)
+      Abaqus::Elset.parse("*elset, elset=fgi, generate", @body)
+      assert_equal(%w(IX.1 IX.3 IX.5 IX.7), Abaqus::Elset["fgi"])
+    end
+
+
   end
 end
 

@@ -12,13 +12,16 @@ unless defined?(ABAQUS_NODE)
       attr :x
       attr :y
       attr :z
-      @@all = {}
+      @@all = UpcaseHash.new #{}
       @@maxid = 0
       UpperLimitID = 9999999
       def Node.[](i)
+        case i
+        when Integer
         raise RangeError,"Node Id 0 is not allowed" if i == 0
         raise RangeError,"Negative Node ID is not allowed" if i < 0
         raise RangeError,"Given ID of #{i} exceeds limit value of #{UpperLimitID}." if i > UpperLimitID
+        end
         @@all[i]
       end
       def Node.add(x,y,z=0.0)
@@ -39,18 +42,21 @@ unless defined?(ABAQUS_NODE)
         end
       end
       def initialize(i,x,y,z=0.0)
-        if i > UpperLimitID
-          raise RangeError,"given id (#{i}) exeeds upper limit (#{UpperLimitID})"
-        end
-        if i < 1
-          raise RangeError,"given id must be greater than zero"
+        case i
+        when Integer
+          if i > UpperLimitID
+            raise RangeError,"given id (#{i}) exeeds upper limit (#{UpperLimitID})"
+          end
+          if i < 1
+            raise RangeError,"given id must be greater than zero"
+          end
+          @@maxid = i if @@maxid < i
         end
         @i = i
         @x = x
         @y = y
         @z = z
         @@all[i] = self
-        @@maxid = i if @@maxid < i
       end
       def Node.clear
         @@all.clear

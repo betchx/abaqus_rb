@@ -37,27 +37,56 @@ module Abaqus
       if name.nil? | name.empty?
         raise ArgumentError, "Nset name was not given."
       end
-      ns = Nset.new(name)
-      if opt["GENERATE"]
-        line_parser = lambda do |arg|
-          f, t, s = * arg.split(/,/).map{|x| x.to_i}
-          s ||= 1
-          a = []
-          f.step(t,s){|i| a << i}
-          a
+      instance = opt["INSTANCE"]
+      if instance
+        if opt["GENERATE"]
+          # generate option was given
+          line_parser = lambda do |arg|
+            f, t, s = * arg.split(/,/).map{|x| x.to_i}
+            s ||= 1
+            a = []
+            f.step(t,s){|i| a << sprintf("%s.%d",instance, i)}
+            a
+          end
+        else
+          line_parser = lambda do |arg|
+            arg.chomp(",").split(/,/).map{|x| "#{instance}.#{x.to_i}"}
+          end
         end
       else
-        line_parser = lambda do |arg|
-          arg.chomp(",").split(/,/).map{|x| x.to_i}
+        if opt["GENERATE"]
+          # generate option was given
+          line_parser = lambda do |arg|
+            a = []
+            if arg.strip =~ /^\s*\d+\s*,/
+              f, t, s = * arg.split(/,/)
+              s ||= 1
+              f.to_i.step(t.to_i, s.to_i){|i| a << i}
+            else
+              n, f, x, t, s = * arg.split(/[,.]/)
+              s ||= 1
+              n.upcase!
+              f.to_i.step(t.to_i, s.to_i){|i| a << sprintf("%s.%d", n, i)}
+            end
+            a
+          end
+        else
+          line_parser = lambda do |arg|
+            if arg.strip =~ /^\s*\d+\s*,/
+              arg.chomp(",").split(/,/).map{|x| x.to_i}
+            else
+              arg.chomp(",").upcase.split(/,/).map{|x| x.strip}
+            end
+          end
         end
       end
-      # generate option was given
+      arr = []
       line = parse_data(body) do |str|
-        ns << line_parser[str]
+        arr << line_parser[str]
       end
+      ns = Nset.new(name)
+      ns << arr.flatten.sort_by{|x| x.to_s.split('.').pop.to_i}.uniq
       ns.flatten!
-      ns.sort!
-      ns.uniq!
       return line, ns
     end
   end
@@ -168,6 +197,36 @@ if $0 == __FILE__
     end
   end
 
+  class TestParseFull < Test::Unit::TestCase
+    def setup
+      @body = flexmock("Gane")
+    end
+    def teardown
+      Abaqus::Nset.clear
+    end
+    def test_fullname
+      @body.should_receive(:gets).twice.and_return("Part1-1.3 , Part1-1.5",nil)
+      Abaqus::Nset.parse("*nset, nset=full",@body)
+      assert_equal(["Part1-1.3","Part1-1.5"], Abaqus::Nset["full"])
+    end
+    def test_with_instance
+      @body.should_receive(:gets).twice.and_return( " 1 , 3 , 5 , 7", nil)
+      Abaqus::Nset.parse("*nset, nset=full-in, instance=Inst",@body)
+      assert_equal(%w(INST.1 INST.3 INST.5 INST.7), Abaqus::Nset["full-in"])
+    end
+    def test_gen_with_instance
+      @body.should_receive(:gets).twice.and_return(" 1, 7, 2", nil)
+      Abaqus::Nset.parse("*nset, nset=gi, generate, instance=ig", @body)
+      assert_equal(%w(IG.1 IG.3 IG.5 IG.7), Abaqus::Nset["gi"])
+    end
+    def test_gen_with_fullname
+      @body.should_receive(:gets).twice.and_return("IX.1, IX.7, 2", nil)
+      Abaqus::Nset.parse("*nset, nset=fgi, generate", @body)
+      assert_equal(%w(IX.1 IX.3 IX.5 IX.7), Abaqus::Nset["fgi"])
+    end
+  end
+
+
   class TestParseInpByCAE < Test::Unit::TestCase
     def setup
       key = "*Nset, nset=RailA, instance=Stringers-1\n"
@@ -191,7 +250,7 @@ if $0 == __FILE__
        380, 381, 382, 383, 384, 385, 386, 387, 388, 389,
        390, 391, 392, 393, 394, 395, 396, 397, 398, 399,
        400, 401, 402, 403, 404, 405, 406, 407, 408, 409,
-       410, 411, 412, 413, 414, 415, 416]
+       410, 411, 412, 413, 414, 415, 416].map{|x| "STRINGERS-1.#{x}"}
       @key, @ns = Abaqus::Nset::parse(key,str)
     end
 
