@@ -15,6 +15,8 @@ module Abaqus
     "*MATERIAL" => Material,
     "*STEP"     => Step,
     "*MPC"      => MPC,
+    "*PART"     => Part,
+    "*INSTANCE" => Instance,
     "*SYSTEM"   => System,
   }
   Property_Keywords = [
@@ -35,8 +37,8 @@ module Abaqus
       return Inp.parse_data(body) {}
     end
   end
-  
-  
+
+
   module_function
   def parse(f_global,name="default_model", check_heading = false)
     model = Model.new(name)
@@ -232,8 +234,110 @@ RF
     def test_mpc_size
       assert_equal(1, @model.mpcs.size)
     end
-
   end
+
+  class TestPartParse < Test::Unit::TestCase
+      str = <<-NNN
+*HEADING
+SAMPLE
+*part, name=rect
+*node
+1, 1.0, 0.0
+2, 2,0, 0.0
+3, 2.0, 1.0
+4, 1.0, 1.0
+*element, type=S4, elset=a
+1, 1, 2, 3, 4
+*nset, nset=b
+3,4
+*end part
+*instance, name=pos, part=rect
+1.0, 0.0, 0.0
+*end instance
+*assembly
+*instance, name=neg, part=rect
+0.0, 0.0, 0.0
+0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 180.
+*end instance
+*nset, nset=pb, instance=pos
+3,4
+*nset, nset=nb
+neg.3, neg.4
+*elset, elset=pa, instance=pos
+1
+*elset, elset=na
+neg.1
+*step
+*end step
+      NNN
+      @@arr = []
+      str.each_line do |s| @@arr << s end
+      @@arr << nil
+    def setup
+      @mock = flexmock("modelTest")
+      @mock.should_receive(:gets).and_return(*@@arr)
+      @model = Abaqus.parse(@mock)
+    end
+    def test_element_fill_name
+      eid = "POS.1"
+      elm = @model.elements[eid]
+      assert_equal(eid, elm.i)
+      assert_equal(%w(POS.1 POS.2 POS.3 POS.4), elm.nodes)
+      assert_equal("S4", elm.type)
+    end
+    def test_node_position_full_name
+      nid = "POS.3"
+      nd = @model.nodes[nid]
+      assert_equal(nid, nd.i)
+      assert_in_delta(3.0, nd.x, 0.0001)
+      assert_in_delta(1.0, nd.y, 0.0001)
+      assert_in_delta(0.0, nd.z, 0.0001)
+    end
+    def test_elset_full
+      assert_equal(%w(NEG.1), @model.elsets["na"])
+      assert_equal(%w(POS.1), @model.elsets["pa"])
+    end
+    def test_elset_indirect
+      assert_equal(%w(NEG.1), @model.elsets["NEG.A"])
+      assert_equal(%w(POS.1), @model.elsets["POS.A"])
+    end
+    def test_nset_full
+      assert_equal(%w(POS.3 POS.4), @model.nsets["pb"])
+    end
+    def test_nset_indirect
+      assert_equal(%w(NEG.3 NEG.4), @model.nsets["NEG.b"])
+    end
+    def test_part_name
+      assert_equal(1, @model.parts.size)
+      assert_equal("RECT", @model.parts["rect"].name)
+    end
+    def test_instance_name
+      assert_equal("POS", @model.instances["pos"].name)
+      assert_equal("NEG", @model.instances["neg"].name)
+    end
+    def test_instance_part_name
+      assert_equal("RECT", @model.instances["pos"].part.name)
+      assert_equal("RECT", @model.instances["neg"].part.name)
+    end
+    def test_node_pos_translate
+      res = @model.instances["pos"].pos(4)
+      # original pos of node 4 is [1,1,0]
+      # translation vector is <1, 0, 0>
+      assert_in_delta(2.0, res.x, 0.0001)
+      assert_in_delta(1.0, res.y, 0.0001)
+      assert_in_delta(0.0, res.z, 0.0001)
+    end
+    def test_node_neg_translate
+      res = @model.instances["neg"].pos(4)
+      # original pos of node 4 is [1,1,0]
+      # rotation in z axis for 180 degree
+      assert_in_delta(-1.0, res.x, 0.0001)
+      assert_in_delta(-1.0, res.y, 0.0001)
+      assert_in_delta( 0.0, res.z, 0.0001)
+    end
+  end
+
+
   class TestParseWithAssembly < Test::Unit::TestCase
     def open_data
       f = open(__FILE__) #File::dirname(__FILE__)+'/../lib/abaqus.rb')
