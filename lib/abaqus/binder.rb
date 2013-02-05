@@ -14,15 +14,26 @@ unless defined?(ABAQUS_BINDER_RB)
           end
           class_variable_set(:@@old_bind, [])# unless defined?(:@@old_bind)
           class_variable_set(:@@all, {})# unless defined?(:@@all)
+          class_variable_set(:@@old_parent, [])
+          class_variable_set(:@@parent, "")
+          def self.parent
+            class_variable_get(:@@parent)
+          end
+          def parent
+            class_variable_get(:@@parent)
+          end
           def self.bind(model)
             class_variable_get(:@@old_bind) << class_variable_get(:@@all)
             class_variable_set(:@@all,
                                model.__send__(class_variable_get(:@@method)))
+            class_variable_get(:@@old_parent) << class_variable_get(:@@parent)
+            class_variable_set(:@@parent, model)
             #p self.class_variables
             reset if defined?(reset)
           end
           def self.release
             class_variable_set(:@@all, class_variable_get(:@@old_bind).pop)
+            class_variable_set(:@@parent, class_variable_get(:@@old_parent).pop)
           end
           def self.with_bind(model)
             self.bind(model)
