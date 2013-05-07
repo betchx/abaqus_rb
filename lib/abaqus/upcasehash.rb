@@ -6,7 +6,12 @@ unless defined?(ABAQUS_UPCASEHASH_RB)
     class UpcaseHash < Hash
       alias :actref :[]
       def [](key)
-        actref(key.to_s.upcase)
+        case key
+        when Numeric
+          actref(key)
+        else
+          actref(key.to_s.upcase)
+        end
       end
     end
   end

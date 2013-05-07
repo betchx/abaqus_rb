@@ -50,9 +50,11 @@ unless defined?(ABAQUS_MODEL_RB)
         @instances = instances
       end
       def [](key)
-        key
-        nd = super
-        unless nd
+        num = key.to_i
+        nd = nil
+        if num > 0 then
+          nd = super(num)
+        else
           name, nid = key.upcase.split(/\./)
           if nid
             if inst = @instances[name]
@@ -60,6 +62,7 @@ unless defined?(ABAQUS_MODEL_RB)
             end
           end
         end
+        raise "Node #{num} does not exist." unless nd
         nd
       end
     end
