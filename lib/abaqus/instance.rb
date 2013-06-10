@@ -14,6 +14,9 @@ unless defined?(ABAQUS_INSTANCE_RB)
       def initialize(name, part)
         @name = name
         @part = part
+        @node_cache = Hash.new
+        @elem_cache = Hash.new
+
         @@all[name.upcase] = self
         @delta = Vector[0.0, 0.0, 0.0]
         @rot_a = Vector[0.0, 0.0, 0.0]
@@ -46,24 +49,25 @@ unless defined?(ABAQUS_INSTANCE_RB)
 
       def element(eid)
         full_name = make_full(eid)
-        elm = Element[full_name]
+        elm = @element_cache[eid]
         unless elm
           if base = part.elements[eid]
             nodes = base.nodes.map{|nid| make_full(nid)}
             elm = base.class.new(full_name, *nodes)
+            @element_cache[eid] = elm
           end
         end
         elm
       end
       def node(nid)
-        nid
-        full_name = make_full(nid)
-        nd = Node[full_name]
+        nd = @node_cache[nid]
         unless nd
+          full_name = make_full(nid)
           base = part.nodes[nid]
           if base
             v = pos(nid)
             nd = Node.new(full_name, v.x, v.y, v.z)
+            @node_cache[nid] = nd
           end
         end
         nd
