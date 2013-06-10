@@ -69,7 +69,14 @@ unless defined?(ABAQUS_MODEL_RB)
 
     ########################################################################
     class Model
+      @@all = UpcaseHash.new
+
+      def self.[](name)
+        @@all[name] || Model.new(name)
+      end
+
       def initialize(name)
+        raise "model '#{name}' is already exist. Use Model.[] instead of Model.new." if @@all.member?(name)
         upcase_hash = UpcaseHash.new
 
         @instances = upcase_hash.clone
@@ -91,6 +98,7 @@ unless defined?(ABAQUS_MODEL_RB)
        loads steps properties materials mpcs).each do |var|
         attr var # remove @
        end
+      @@all[name] = self
     end
     GlobalModel = Model.new("global")
 
