@@ -56,17 +56,40 @@ unless defined?(ABAQUS_MODEL_RB)
       def [](key)
         num = key.to_i
         nd = nil
+        name = nil
+        nid = nil
         if num > 0 then
           nd = super(num)
         else
           name, nid = key.upcase.split(/\./)
           if nid
-            if inst = @instances[name]
+            inst = @instances[name]
+            unless inst.nil?
               nd = inst.node(nid.to_i)
+              if nd.nil? then 
+                open("dump.txt","wb") do |out|
+                  out.puts "Node #{key} does not exist."
+                  out.puts "num=#{num}\n nid=#{nid}\n name=#{name}"
+                  out.puts inst.inspect
+                end
+                raise "node #{nid} does not found in #{name}. see dump.txt for details."
+              end
+            else
+              open("dump.txt","wb") do |out|
+                  out.puts "Node #{key} does not exist."
+                  out.puts "num=#{num}\n nid=#{nid}\n name=#{name}"
+                  out.puts @instances.object_id
+                  out.puts @instances.keys
+                  out.puts @parent.name
+                  out.puts @parent.instances.object_id
+              end
+              raise "instance #{name} is not found in the model. see dump.txt for details."
             end
+          else
+            raise "nid is not true (#{nid.inspect})."
           end
         end
-        raise "Node #{num} does not exist." unless nd
+        raise "Node #{key} does not exist.(num=#{num}, nid=#{nid}, name=#{name})" unless nd
         nd
       end
     end
