@@ -27,7 +27,8 @@ unless defined?(ABAQUS_MODEL_RB)
     end
 
     class ElementHash < UpcaseHash
-      def initialize(instances)
+      def initialize(parent, instances)
+        @parent = parent
         @instances = instances
       end
       def [](key)
@@ -46,9 +47,12 @@ unless defined?(ABAQUS_MODEL_RB)
     end
 
     class NodeHash < UpcaseHash
-      def initialize(instances)
+      def initialize(parent, instances)
+        @parent = parent
         @instances = instances
       end
+      attr :parent
+      attr :instances
       def [](key)
         num = key.to_i
         nd = nil
@@ -80,8 +84,8 @@ unless defined?(ABAQUS_MODEL_RB)
         upcase_hash = UpcaseHash.new
 
         @instances = upcase_hash.clone
-        @elements = ElementHash.new(@instances)
-        @nodes = NodeHash.new(@instances)
+        @elements = ElementHash.new(self, @instances)
+        @nodes = NodeHash.new(self, @instances)
         @parts = upcase_hash.clone
         @nsets = upcase_hash.clone
         @elsets = upcase_hash.clone
