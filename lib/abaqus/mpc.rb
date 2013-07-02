@@ -27,8 +27,8 @@ unless defined?(ABAQUS_MPC_RB)
       def self.[](nid)
         @@all[nid]
       end
-      def initialize(mpc_type, dependent_node, independent_node)
-        @independent_node = independent_node.to_i
+      def initialize(mpc_type, dependent_node, *independent_node)
+        @independent_node = independent_node.map{|x| x.to_i}
         @dependent_node = dependent_node.to_i
         @mpc_type = mpc_type.upcase
         @@all[@dependent_node] = self
@@ -39,7 +39,7 @@ unless defined?(ABAQUS_MPC_RB)
       alias :type :mpc_type
 
       def self.independent_nodes
-        @@all.values.map{|x| x.ind}.sort.uniq
+        @@all.values.map{|x| x.ind}.flatten.sort.uniq
       end
       def self.dependent_nodes(nid = nil)
         if nid
