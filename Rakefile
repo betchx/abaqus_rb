@@ -41,6 +41,16 @@ end
 
 task :dat_extract do
   sh "ruby -I lib -r exerb/mkexy  dat_extract.rb"
+  File.rename("dat_extract.exy","dat_extract.file")
+  open("dat_extract.exy","ab") do |out|
+    out.print open("dat_extract.inc","rb").read.gsub(/RUBY_VERSION/,`ruby -v`.chomp)
+    open("dat_extract.file","rb") do |f|
+      flag = false
+      while line = f.gets
+        flag = true if line =~ /^file:/
+        out.puts line if flag
+      end
+    end
+  end
   sh "exerb -c cui dat_extract.exy"
-  sh "rm dat_extract.exy"
 end

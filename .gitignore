@@ -4,3 +4,6 @@ extra/flexmock-*/
 test/
 doc/
 .bash_history
+dat_extract.exe
+dat_extract.exy
+dat_extract.file
