@@ -5,6 +5,7 @@ INC = /INCREMENT +(\d+) SUMMARY/ ;
 FIN = /THE ANALYSIS HAS BEEN COMPLETED/;
 FIN2 = /ANALYSIS COMPLETE/;
 
+require 'pp'
 
 require 'abaqus'
 
@@ -20,6 +21,39 @@ class File
 
   end
 end
+
+class ErrorDumper
+  def initialize(file = nil)
+    if file
+      @file = file
+      @out = nil
+    else
+      @out = $defout
+    end
+  end
+
+  def <<(arg)
+    @out ||= open(@file, "wb")  or raise "Could not open error file #{@file} for output."
+
+    at = caller.first
+    unless  at == @prev
+      @prev = at
+      @out.puts at
+    end
+    case arg
+    when String  # to supress quatations.
+      @out.puts arg
+    else
+      PP.pp(arg, @out)
+    end
+
+    return self
+  end
+end
+
+dumper = ErrorDumper.new("#{File::basename($0,'.rb')}.err")
+
+
 
 ARGV.each do |file|
   $stderr.puts "DAT file: #{file}"
@@ -225,6 +259,10 @@ ARGV.each do |file|
         end until (line = f.gets.strip).empty?
         out.print t
         nodes[name].each do |nid|
+          if res[nid].nil?
+            dumper << "nid" << nid << "res" << res << "res[nid]" << res[nid] << "res[nid.to_i]" << res[nid.to_i]
+            raise "Any result for NID:#{nid} was not found in 'res'"
+          end
           out.print ",#{res[nid].join(',')}"
         end
         out.puts
