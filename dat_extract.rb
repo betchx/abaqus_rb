@@ -255,7 +255,7 @@ ARGV.each do |file|
         res = {}
         begin
           nid, *values  = line.split
-          res[nid.to_i] = values
+          res[nid] = values
         end until (line = f.gets.strip).empty?
         out.print t
         nodes[name].each do |nid|
