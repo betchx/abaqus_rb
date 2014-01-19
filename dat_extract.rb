@@ -68,7 +68,7 @@ ARGV.each do |file|
   model = Abaqus::parse(open(inp))
   outs = {}
   nodes = {}
-  elems = {}
+  fixed_inc = false
 
   # Create output directory
   Dir::mkdir(base) unless FileTest::directory?(base)
@@ -79,28 +79,36 @@ ARGV.each do |file|
   # Skip to first increment
   begin
     line = f.gets
+    if line =~ /FIXED TIME INCREMENTS/
+      line = f.gets
+      fixed_inc = line.strip.split.pop.to_f
+    end
     raise if line.nil?
   end until line =~ INC
 
   while line
-    inc = line.scan(INC).flatten[0]
+    inc = line.scan(INC).flatten[0].to_i
     4.times{ line = f.gets }
-    t = line.split.pop.to_f
+
+    if fixed_inc
+      t = fixed_inc * inc
+    else
+      t = line.split.pop.to_f
+    end
 
     $stderr.print sprintf("\rinc %5d  time: %g", inc, t)
 
 
     line = f.skip
-#    $stderr.puts "time: #{t}: #{line} @ #{f.lineno}"
+    #$stderr.puts "time: #{t}: #{line} @ #{f.lineno}"
     raise unless line =~ /E L E M E N T   O U T P U T/ ;
 
     while (line = f.skip)
-      #$stderr.puts line
       break if line =~/N O D E   O U T P U T/;
       break if line =~ INC
       break if line =~ FIN
       break if line =~ FIN2
-      #      $stderr.puts "line : '#{line}'"
+      #$stderr.puts "line : '#{line}'"
       raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
       elname = line.split.pop
       until (wk = f.gets.strip).empty?
@@ -114,90 +122,58 @@ ARGV.each do |file|
       when /AT THE INTEGRATION POINTS/
         name = elname + "-ip"
         point = :integ
-        heads = f.skip.strip.split[4..-1]
       when /AT THE CENTROID OF THE ELEMENT/
         name = elname + "-ec"
         point = :center
-        heads = f.skip.strip.split[3..-1]
       when /AT THE NODE OF/ # maybe element nodes
         name = elname + "-en"
         point = :elnode
-        heads = f.skip.strip.split[4..-1]
       else
         raise "Not supported output type for elset #{elname}"
       end
+      heads = f.skip.split(/-/,2).pop.strip.split.map{|x| x.strip}
+
       out = outs[name]
       if out.nil?
-        out = open("#{base}/#{name}.csv","w")
+        out = {:name=>name, :time => [], :heads => {}, :data => {}}
         outs[name] = out
-
-        if model.elsets[elname]
-          elems[elname] = model.elsets[elname].sort
-        elsif model.steps[$step-1].elsets[elname]
-          elems[elname] = model.steps[$step-1].elsets[elname].sort
-        else
-          raise "Element set '#{elname}' does not found"
-        end
-        out.print "time"
-        heads.each do |h|
-          elems[elname].each do |e|
-            case point
-            when :integ
-              1.upto(4) do |pt|
-                [1,5].each do |sec|
-                  out.print ",#{h}@e#{e}-pt#{pt}-sp#{sec}"
-                end
-              end
-            when :center
-              [1,5].each do |sec|
-                out.print ",#{h}@e#{e}-sp#{sec}"
-              end
-            when :elnode
-              nodes = model.elements(e).nodes.sort
-              nodes.each do |n|
-                [1,5].each do |sec|
-                  out.print ",#{h}@e#{e}-n#{n}-sp#{sec}"
-                end
-              end
-            end
-          end
-        end
-        out.puts
       end
       1.times{f.gets}
-      out.print t
+      out[:time] << t
       line = f.skip
       case point
       when :integ, :elnode
-        if line =~ /ALL VALUES/
-          (heads.size * elems[elname].size * 8).times{out.print ",0"}
-          out.puts
-        else
-          res = {}
+        unless line =~ /ALL VALUES/
           begin
-            eid, pt, sec, *val = line.split
-            res[[eid,pt,sec]] = val
+            eid, pt, sec, *val = line.strip.split
+            heads.each_with_index do |h,i|
+              key = [h,eid,pt,sec]
+              if out[:data][key].nil?
+               out[:data][key] ||= ["0"] * (inc - 1)
+               if point == :integ
+                 out[:heads][key] = "#{h}@e#{eid}-pt#{pt}-sp#{sec}"
+               else
+                 out[:heads][key] = "#{h}@e#{eid}-n#{n}-sp#{sec}"
+               end
+              end
+              out[:data][key] << val[i]
+            end
           end until (line = f.gets.strip).empty?
-          res.keys.sort.each do |k|
-            out.print ",#{res[k]}"
-          end
-          out.puts
           5.times{f.gets}
         end
       when :center
-        if line =~ /ALL VALUES/
-          (heads.size * elems[elname].size * 2).times{out.print ",0"}
-          out.puts
-        else
-          res = {}
+        unless line =~ /ALL VALUES/
           begin
             eid, sec, *val = line.split
-            res[[eid, sec]] = val
+            heads.each_with_index do |h,i|
+              key = [h,eid,sec]
+              if out[:data][key].nil?
+                out[:data][key] = ["0"] * (inc - 1)
+                out[:heads][key] = "#{h}@e#{eid}-sp#{sec}"
+              end
+              out[:data][key] << val[i]
+            end
           end until (line = f.gets.strip).empty?
-          res.keys.sort.each do |k|
-            out.print ",#{res[k]}"
-          end
-          out.puts
           5.times{f.gets}
         end
       end
@@ -215,7 +191,6 @@ ARGV.each do |file|
       break if line =~ INC
       break if line =~ FIN
       break if line =~ FIN2
-      #$stderr.puts line
       wk = line
       begin
         name = wk.split.pop
@@ -226,7 +201,7 @@ ARGV.each do |file|
       line = f.skip
       heads = line.strip.split[2..-1]
       unless out
-        out = open("#{base}/#{name}.csv","w")
+        out = {:name=>name, :time => ["time"], :heads => {}, :data => {}}
         outs[name] = out
         if model.nsets[name]
           nodes[name] = model.nsets[name].sort
@@ -235,37 +210,26 @@ ARGV.each do |file|
         else
           raise "Node set '#{name}' does not found"
         end
-        out.print "time"
         nodes[name].each do |nid|
           heads.each do |h|
-            out.print ",#{h}@#{nid}"
+            out[:heads][[h,nid]] = ",#{h}@#{nid}"
+            out[:data][[h,nid]] = []
           end
         end
-        out.puts
       end
       2.times{f.gets}
       line = f.gets
+      out[:time] << t
       if line =~/ALL VALUES IN THIS TABLE ARE ZERO/
-        out.print t
-        (heads.size * nodes[name].size).times do
-          out.print ",0"
-        end
-        out.puts
+        out[:data][[h,nid]] << 0.0
       else
         res = {}
         begin
           nid, *values  = line.split
-          res[nid] = values
-        end until (line = f.gets.strip).empty?
-        out.print t
-        nodes[name].each do |nid|
-          if res[nid].nil?
-            dumper << "nid" << nid << "res" << res << "res[nid]" << res[nid] << "res[nid.to_i]" << res[nid.to_i]
-            raise "Any result for NID:#{nid} was not found in 'res'"
+          heads.each_with_indox do |h,i|
+            out[:data][[h,nid]] << values[i]
           end
-          out.print ",#{res[nid].join(',')}"
-        end
-        out.puts
+        end until (line = f.gets.strip).empty?
         6.times{f.gets}
       end
     end while line = f.skip
@@ -275,15 +239,35 @@ ARGV.each do |file|
 
   end
 
-  outs.each do |k,out|
-    out.close
-  end
-
   f.close
+
+  #outs.each do |k,out|
+  #  out.close
+  #end
+
+  outs.each do |name,set|
+    keys = set[:data].keys.sort
+
+    open("#{base}/#{name}.csv","w") do |out|
+      out.print "time"
+      keys.each do |key|
+        out.print ",#{set[:heads][key]}"
+      end
+      out.puts
+
+      set[:time].each_with_index do |t,i|
+        out.print t
+        keys.each do |key|
+          out.print ",#{set[:data][key][i]}"
+        end
+        out.puts
+      end
+    end
+  end # out
 
   $stderr.puts
 
-end
+end # ARGV
 
 
 $stderr.puts "Finished.  Press Enter to exit"
