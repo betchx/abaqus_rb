@@ -41,6 +41,7 @@ module Abaqus
 
   module_function
   def parse(f_global,name="default_model", check_heading = false)
+    f = nil
     model = Model.new(name)
     Node.reset_converter  # clear system definition
     iostack = [f_global] # stack of io due to *INCLUDE
@@ -74,6 +75,12 @@ module Abaqus
      end
     end
     return model
+  rescue
+    $stderr.puts "Error at line #{f.instance_of?(IO)?(f.lineno):'-' } of #{f.instance_of?(File)?(f.path):(f.to_s)}"  if f
+    iostack.each do |io|
+      $stderr.puts "Included from line #{io.lineno} of #{io}"
+    end
+    raise
   end
 end
 
