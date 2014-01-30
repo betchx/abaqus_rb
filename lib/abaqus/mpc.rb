@@ -22,34 +22,85 @@ unless defined?(ABAQUS_MPC_RB)
         @@all.clear
       end
       def self.size
-        @@all.size
+        @@all[:all].size
       end
-      def self.[](nid)
-        @@all[nid]
+      def nodes
+        @nodes
       end
-      def initialize(mpc_type, dependent_node, *independent_node)
-        @independent_node = independent_node.map{|x| x.to_i}
-        @dependent_node = dependent_node.to_i
-        @mpc_type = mpc_type.upcase
-        @@all[@dependent_node] = self
+      def self.[](i)
+        @@all[:all][i]
       end
-      attr_reader :independent_node, :dependent_node, :mpc_type
-      alias :dep :dependent_node
-      alias :ind :independent_node
-      alias :type :mpc_type
-
-      def self.independent_nodes
-        @@all.values.map{|x| x.ind}.flatten.sort.uniq
-      end
-      def self.dependent_nodes(nid = nil)
-        if nid
-          @@all.keys.select{|x| @@all[x].ind == nid}.sort
-        else
-          @@all.keys.sort
+      def self.select(a,b=nil)
+        case a
+        when String
+          type = a
+          if b
+            @@all[type].select{|m| m.deps.include?(dep)}
+          end
+          @@all[type]
+        when Integer
+          @@all.values.flatten.select{|m| m.nodes.include?(nid.to_s)}
         end
       end
-      def self.inds
-        self.independent_nodes
+      def initialize(mpc_type, *nodes)
+        @nodes = nodes.dup
+        case @mpc_type = mpc_type.upcase
+        when "LINEAR","QUADRATIC","BILINEAR","C BIQUAD",
+             "P LINEAR", "T LINEAR",
+             "P BILINEAR", "T BILINEAR"
+          @independent_nodes = [nodes.shift]
+          @dependent_nodes = nodes
+        when  "BEAM","ELBOW", "LINK", "PIN", "TIE"
+          @dependent_nodes = [nodes.shift]
+          @independent_nodes = [nodes.shift]
+        when "REVOLUTE", "SLIDER", "UNIVERSAL","V LOCAL"
+          @dependent_nodes = [nodes.shift]
+          @independent_nodes = nodes
+        when "CYCLSYM"
+          @independent_nodes = [nodes.shift]
+          @dependent_nodes = [nodes.shift]
+          @ref_nodes = nodes
+        when "SS LINEAR", "SS BILINEAR","SSF BILINEAR"
+          @independent_nodes = [nodes.shift]
+          @dependent_nodes = nodes
+        end
+        @@all[@type] ||= []
+        @@all[@type] <<  self
+        @@all[:all] ||= []
+        @@all[:all] << self
+      end
+      attr_reader :independent_nodes, :dependent_nodes, :mpc_type
+      alias :deps :dependent_nodes
+      alias :inds :independent_nodes
+      alias :type :mpc_type
+
+      def dependent_node
+        raise "dep for #{@dependent_nodes}" unless @dependent_nodes.size == 1
+        @dependent_nodes[0]
+      end
+      def independent_node
+        raise "dep for #{@independent_nodes}" unless @independent_nodes.size == 1
+        @independent_nodes[0]
+      end
+      alias :dep :dependent_node
+      alias :ind :independent_node
+
+      def self.independent_nodes(dep_nid = nil)
+        if dep_nid
+          @@all.values.flatten.select{|m| m.deps.include?(dep_nid.to_s)}.map{|m| m.inds}.flatten.sort.uniq
+        else
+          @@all.values.flatten.map{|m| m.ind}.flatten.sort.uniq
+        end
+      end
+      def self.dependent_nodes(ind_nid = nil)
+        if ind_nid
+          @@all.values.flatten.select{|m| m.inds.include?(ind_nid.to_s)}.map{|m| m.deps}.flatten.sort.uniq
+        else
+          @@all.values.flatten.map{|m| m.deps}.flatten.sort.uniq
+        end
+      end
+      def self.inds(nid = nil)
+        self.independent_nodes(nid)
       end
       def self.deps(nid = nil)
         self.dependent_nodes(nid)
