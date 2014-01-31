@@ -8,7 +8,7 @@ unless defined?(ABAQUS_UPCASEHASH_RB)
       def [](key)
         case key
         when Numeric
-          actref(key)
+          actref(key) || actref(key.to_s)
         else
           actref(key.to_s.upcase)
         end
