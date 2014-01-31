@@ -86,6 +86,9 @@ module Abaqus
     def bcs
       @bcs||={}
     end
+    def dloads
+      @dloads ||= {}
+    end
     def loads
       @loads ||= {}
     end
