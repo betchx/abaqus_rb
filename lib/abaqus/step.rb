@@ -59,9 +59,13 @@ module Abaqus
           Bc.with_bind(step) do
             line = Bc.parse(line, body)
           end
-        when "*CLOAD","*DLOAD"
+        when "*CLOAD"
           Load.with_bind(step) do
             line = Load.parse(line, body)
+          end
+        when "*DLOAD"
+          DLoad.with_bind(step) do
+            line = DLoad.parse(line, body)
           end
         when "*NSET"
           Nset.with_bind(step) do

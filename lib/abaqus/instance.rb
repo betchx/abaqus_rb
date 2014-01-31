@@ -49,12 +49,12 @@ unless defined?(ABAQUS_INSTANCE_RB)
 
       def element(eid)
         full_name = make_full(eid)
-        elm = @element_cache[eid]
+        elm = @elem_cache[eid]
         unless elm
           if base = part.elements[eid]
             nodes = base.nodes.map{|nid| make_full(nid)}
             elm = base.class.new(full_name, *nodes)
-            @element_cache[eid] = elm
+            @elem_cache[eid] = elm
           end
         end
         elm

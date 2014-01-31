@@ -196,7 +196,7 @@ if $0 == __FILE__
     def test_fullname
       @body.should_receive(:gets).twice.and_return("Part1-1.3 , Part1-1.5",nil)
       Abaqus::Elset.parse("*elset, elset=full",@body)
-      assert_equal(["Part1-1.3","Part1-1.5"], Abaqus::Elset["full"])
+      assert_equal(["PART1-1.3","PART1-1.5"], Abaqus::Elset["full"])
     end
     def test_with_instance
       @body.should_receive(:gets).twice.and_return( " 1 , 3 , 5 , 7", nil)

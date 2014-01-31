@@ -56,11 +56,12 @@ end
 
 
 if $0 == __FILE__
+require "abaqus/upcasehash"
 unless defined?(Abaqus::Node)
-  require pos+"/node"
+  require "abaqus/node"
 end
 unless defined?(Abaqus::Model)
-  require pos+"/model"
+  require "abaqus/model"
 end
   require 'test/unit'
   require 'flexmock/test_unit'

@@ -1,122 +1,123 @@
 
 unless defined?(Abaqus::System)
 
-require 'abaqus/node'
-require 'narray'
+  require 'abaqus/node'
+  require 'narray'
 
-class NVector
-  def cross_product(other)
-    unless self.shape == [3]
-      raise DomainError
+  class NVector
+    def cross_product(other)
+      unless self.shape == [3]
+        raise DomainError
+      end
+      unless other.shape == [3]
+        raise DomainError
+      end
+      NVector[ self[1]*other[2] - self[2]*other[1],
+        self[2]*other[0] - self[0]*other[2],
+        self[0]*other[1] - self[1]*other[0]]
     end
-    unless other.shape == [3]
-      raise DomainError
+    def norm
+      Math.sqrt(self * self)
     end
-    NVector[ self[1]*other[2] - self[2]*other[1],
-      self[2]*other[0] - self[0]*other[2],
-      self[0]*other[1] - self[1]*other[0]]
-  end
-  def norm
-    Math.sqrt(self * self)
-  end
-  def normalize
-    self / self.norm
-  end
-  def normalize!
-    n = self.norm
-    self.size.times do |i|
-      self[i] = self[i] / n
+    def normalize
+      self / self.norm
     end
-    self
+    def normalize!
+      n = self.norm
+      self.size.times do |i|
+        self[i] = self[i] / n
+      end
+      self
+    end
   end
+
+  module Abaqus
+    class System
+      extend Inp
+      def self.parse(line, body)
+        keyword, options = parse_command(line)
+        unless keyword == "*SYSTEM"
+          raise ArgumentError, "System.parse can trea *SYSTEM keyword only"
+        end
+        points = []
+        line = parse_data(body) do |str|
+          points << str
+        end
+        if points.size > 2
+          raise ArgumentError,"Too much contents for *SYSTEM were given. Please check inp file"
+        end
+        a = points.join(',').split(/,/).map{|x| x.to_f}
+        case a.size
+        when 0
+          #nothing  ==> reset
+          Node.reset_converter
+        when 3
+          #shift
+          Node.converter = create_shifter(*a)
+        when 6
+          #shift and rotate in z axis
+          Node.converter = create_plain_rotater(*a)
+        when 9
+          #shift and rotate in 3d
+          Node.converter = create_rotater
+
+        else
+          raise ArgumentError, "Incorrect contents for *SYSTEM were given. Please check inp file"
+        end
+        line
+      end
+      E1 = NVector[1.0, 0.0, 0.0]
+      E2 = NVector[0.0, 1.0, 0.0]
+      E3 = NVector[0.0, 0.0, 1.0]
+      DELTA = 0.001
+      def initialize(qmat)
+        @qmat = qmat
+      end
+      def self.translate(vect)
+        mat = NMatrix.float(4,4).I
+        mat[3,0] = vect[0]
+        mat[3,1] = vect[1]
+        mat[3,2] = vect[2]
+        return mat
+      end
+      def self.rotate(ax, ay, az)
+        mat = NMatrix.float(4,4)
+        mat[0,0..2] = ax.normalize
+        mat[1,0..2] = ay.normalize
+        mat[2,0..2] = az.normalize
+        mat[3,3] = 1.0
+        return mat
+      end
+      def self.create_shifter(dx,dy,dz)
+        self.new(translate(NVector[dx,dy,dz]))
+      end
+      def self.create_plain_rotater(x0,y0,z0, x1, y1, z1)
+        origin = NVector[x0,y0,z0]
+        pos_x = NVector[x1,y1,z0]
+        ax = pos_x - origin
+        az = E3
+        ay = az.cross_product(ax)
+        self.new( translate(origin) * rotate(ax,ay,az))
+      end
+      def self.create_rotater(x0,y0,z0,x1,y1,z1,x2,y2,z2)
+        origin = NVector[x0, y0, z0]
+        pos_x  = NVector[x1,y1,z1]
+        pos_z0  = NVector[x2,y2,z2]
+        ax = pos_x - origin
+        az0 = pos_z0 - origin
+        az = ax.cross_product(az0)
+        ay = az.cross_product(ax)
+        self.new( translate(origin) * rotate(ax,ay,az) )
+      end
+      def convert(x,y,z)
+        vec = NVector[x,y,z,1.0]
+        res = @qmat * vec
+        return res[0..2]
+      end
+    end
+  end
+
 end
-
-module Abaqus
-  class System
-    extend Inp
-    def self.parse(line, body)
-      keyword, options = parse_command(line)
-      unless keyword == "*SYSTEM"
-        raise ArgumentError, "System.parse can trea *SYSTEM keyword only"
-      end
-      points = []
-      line = parse_data(body) do |str|
-        points << str
-      end
-      if points.size > 2
-        raise ArgumentError,"Too much contents for *SYSTEM were given. Please check inp file"
-      end
-      a = points.join(',').split(/,/).map{|x| x.to_f}
-      case a.size
-      when 0
-        #nothing  ==> reset
-        Node.reset_converter
-      when 3
-        #shift
-        Node.converter = create_shifter(*a)
-      when 6
-        #shift and rotate in z axis
-        Node.converter = create_plain_rotater(*a)
-      when 9
-        #shift and rotate in 3d
-        Node.converter = create_rotater
-
-      else
-        raise ArgumentError, "Incorrect contents for *SYSTEM were given. Please check inp file"
-      end
-      line
-    end
-    E1 = NVector[1.0, 0.0, 0.0]
-    E2 = NVector[0.0, 1.0, 0.0]
-    E3 = NVector[0.0, 0.0, 1.0]
-    DELTA = 0.001
-    def initialize(qmat)
-      @qmat = qmat
-    end
-    def self.translate(vect)
-      mat = NMatrix.float(4,4).I
-      mat[3,0] = vect[0]
-      mat[3,1] = vect[1]
-      mat[3,2] = vect[2]
-      return mat
-    end
-    def self.rotate(ax, ay, az)
-      mat = NMatrix.float(4,4)
-      mat[0,0..2] = ax.normalize
-      mat[1,0..2] = ay.normalize
-      mat[2,0..2] = az.normalize
-      mat[3,3] = 1.0
-      return mat
-    end
-    def self.create_shifter(dx,dy,dz)
-      self.new(translate(NVector[dx,dy,dz]))
-    end
-    def self.create_plain_rotater(x0,y0,z0, x1, y1, z1)
-      origin = NVector[x0,y0,z0]
-      pos_x = NVector[x1,y1,z0]
-      ax = pos_x - origin
-      az = E3
-      ay = az.cross_product(ax)
-      self.new( translate(origin) * rotate(ax,ay,az))
-    end
-    def self.create_rotater(x0,y0,z0,x1,y1,z1,x2,y2,z2)
-      origin = NVector[x0, y0, z0]
-      pos_x  = NVector[x1,y1,z1]
-      pos_z0  = NVector[x2,y2,z2]
-      ax = pos_x - origin
-      az0 = pos_z0 - origin
-      az = ax.cross_product(az0)
-      ay = az.cross_product(ax)
-      self.new( translate(origin) * rotate(ax,ay,az) )
-    end
-    def convert(x,y,z)
-      vec = NVector[x,y,z,1.0]
-      res = @qmat * vec
-      return res[0..2]
-    end
-  end
-end
-
 
 if $0 == __FILE__
   require 'test/unit'
@@ -171,21 +172,21 @@ if $0 == __FILE__
       @x1, @y1, @z1 = @x0, @y0+1.0, @z0+1.0
       @x2, @y2, @z2 = @x0 - 1.0, @y1, @z1
       @str1 = <<-NNN
- #{@x0}, #{@y0}, #{@z0}
+      #{@x0}, #{@y0}, #{@z0}
       NNN
       @str2 = <<-NNN
- #{@x0}, #{@y0}, #{@z0}, #{@x1}, #{@y1}, #{@z1}
+      #{@x0}, #{@y0}, #{@z0}, #{@x1}, #{@y1}, #{@z1}
       NNN
       @str3 = <<-NNN
- #{@x0}, #{@y0}, #{@z0}, #{@x1}, #{@y1}, #{@z1}
- #{@x2}, #{@y2}, #{@z2}
+      #{@x0}, #{@y0}, #{@z0}, #{@x1}, #{@y1}, #{@z1}
+      #{@x2}, #{@y2}, #{@z2}
       NNN
       @x = 4.0
       @y = 5.0
       @z = 6.0
       @node_str = <<-NNN
 1, #{@x}, #{@y}, #{@z}
-      NNN
+NNN
     end
     DELTA = 0.001
     def test_shift
@@ -324,4 +325,3 @@ if $0 == __FILE__
   end
 end
 
-end

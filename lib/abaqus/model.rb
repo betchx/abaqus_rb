@@ -24,6 +24,9 @@ unless defined?(ABAQUS_MODEL_RB)
       def deps(nid = nil)
         self.dependent_nodes(nid)
       end
+      def size
+        self[:all].size
+      end
     end
 
     class ElementHash < UpcaseHash
@@ -89,7 +92,7 @@ unless defined?(ABAQUS_MODEL_RB)
             raise "nid is not true (#{nid.inspect})."
           end
         end
-        raise "Node #{key} does not exist.(num=#{num}, nid=#{nid}, name=#{name})" unless nd
+        # raise "Node #{key} does not exist.(num=#{num}, nid=#{nid}, name=#{name})" unless nd
         nd
       end
     end
@@ -114,6 +117,7 @@ unless defined?(ABAQUS_MODEL_RB)
         @elsets = upcase_hash.clone
         @bcs = upcase_hash.clone
         @loads = upcase_hash.clone
+        @dloads = upcase_hash.clone
         @properties = upcase_hash.clone
         @materials = upcase_hash.clone
         @mpcs = {}
@@ -122,7 +126,7 @@ unless defined?(ABAQUS_MODEL_RB)
         @steps = []  # step must be array to keep order
       end
       %w(name nodes elements nsets elsets bcs parts instances
-       loads steps properties materials mpcs).each do |var|
+       loads dloads steps properties materials mpcs).each do |var|
         attr var # remove @
        end
       @@all[name] = self
@@ -149,7 +153,7 @@ unless defined?(ABAQUS_MODEL_RB)
   module Abaqus
     class Model
       BindTargets = [Node, Element, Nset, Elset, Part, Instance,
-        Bc, Load, Step, Property, Material,MPC]
+        Bc, Load, DLoad, Step, Property, Material,MPC]
       BindTargets.each do |target|
         Binder.inject_bind_methods(target)
       end
@@ -215,10 +219,6 @@ if $0 == __FILE__
     end
     def test_mpc
       assert_not_nil(@m.mpcs)
-    end
-    def test_nodes_add
-      @m.nodes[0] =  99
-      assert_equal(99, @m.nodes[0])
     end
     def test_name
       assert_equal(@name, @m.name)

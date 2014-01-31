@@ -115,8 +115,8 @@ if $0 == __FILE__
 
   class TestMPC < Test::Unit::TestCase
     def setup
-      @ind = 3
-      @dep = 6
+      @ind = "3"
+      @dep = "6"
       @type = "beam"
       @mpc = Abaqus::MPC.new(@type, @dep, @ind)
     end
@@ -129,8 +129,14 @@ if $0 == __FILE__
     def test_ind
       assert_equal(@ind, @mpc.ind)
     end
+    def test_inds
+      assert_equal([@ind], @mpc.inds)
+    end
     def test_dep
       assert_equal(@dep, @mpc.dep)
+    end
+    def test_deps
+      assert_equal([@dep], @mpc.deps)
     end
   end
   class TestMPCParse < Test::Unit::TestCase
@@ -149,37 +155,50 @@ if $0 == __FILE__
       Abaqus::MPC.parse("*MPC",@mock)
     end
     def test_deps
-      assert_equal(2, Abaqus::MPC[2].dep)
-      assert_equal(3, Abaqus::MPC[3].dep)
-      assert_equal(4, Abaqus::MPC[4].dep)
+      assert_equal(["2"], Abaqus::MPC[0].deps)
+      assert_equal(["3"], Abaqus::MPC[1].deps)
+      assert_equal(["4"], Abaqus::MPC[2].deps)
+    end
+    def test_dep
+      assert_equal("2", Abaqus::MPC[0].dep)
+      assert_equal("3", Abaqus::MPC[1].dep)
+      assert_equal("4", Abaqus::MPC[2].dep)
     end
     def test_independent
-      assert_equal(1, Abaqus::MPC[2].ind)
-      assert_equal(1, Abaqus::MPC[3].ind)
-      assert_equal(6, Abaqus::MPC[4].ind)
+      assert_equal("1", Abaqus::MPC[0].ind)
+      assert_equal("1", Abaqus::MPC[1].ind)
+      assert_equal("6", Abaqus::MPC[2].ind)
+    end
+    def test_independents
+      assert_equal(["1"], Abaqus::MPC[0].inds)
+      assert_equal(["1"], Abaqus::MPC[1].inds)
+      assert_equal(["6"], Abaqus::MPC[2].inds)
     end
     def test_size
       assert_equal(3, Abaqus::MPC.size)
     end
     def test_type
+      assert_equal("BEAM", Abaqus::MPC[0].type)
+      assert_equal("LINK", Abaqus::MPC[1].type)
       assert_equal("BEAM", Abaqus::MPC[2].type)
-      assert_equal("LINK", Abaqus::MPC[3].type)
-      assert_equal("BEAM", Abaqus::MPC[4].type)
     end
     def test_deps
-      assert_equal([2,3,4], Abaqus::MPC.deps)
+      assert_equal(["2","3","4"], Abaqus::MPC.deps)
     end
     def test_dependent_nodes
-      assert_equal([2,3,4], Abaqus::MPC.dependent_nodes)
+      assert_equal(%w(2 3 4), Abaqus::MPC.dependent_nodes)
     end
     def test_deps_with_arg
-      assert_equal([2,3], Abaqus::MPC.deps(1))
+      assert_equal(%w(2 3), Abaqus::MPC.deps(1))
     end
     def test_inds
-      assert_equal([1,6], Abaqus::MPC.inds)
+      assert_equal(%w(1 6), Abaqus::MPC.inds)
     end
     def test_independent_nodes
-      assert_equal([1,6], Abaqus::MPC.independent_nodes)
+      assert_equal(%w(1 6), Abaqus::MPC.independent_nodes)
+    end
+    def test_independent_nodes_with_arg
+      assert_equal(["1"], Abaqus::MPC.independent_nodes(2))
     end
   end
 end
