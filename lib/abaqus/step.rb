@@ -87,28 +87,20 @@ module Abaqus
       @bcs||={}
     end
     def dloads
-      @dloads ||= {}
+      @dloads ||= UpcaseHash.new
     end
     def loads
-      @loads ||= {}
+      @loads ||= UpcaseHash.new
     end
     def nsets
-      @nsets ||= {}
+      @nsets ||= UpcaseHash.new
     end
     def elsets
-      @elsets ||= {}
+      @elsets ||= UpcaseHash.new
     end
     def initialize(name)
-      upcase_hash = Hash.new
-      upcase_hash.instance_eval{ |o|
-        alias :actref :[]
-        def [](key)
-          actref(key.upcase)
-        end
-      }
+      upcase_hash = UpcaseHash.new
       @name = name
-      @nsets = upcase_hash.clone
-      @elsets = upcase_hash.clone
       @@all << self
       @num = @@all.size
       @analysis_type = "not dynamic"
