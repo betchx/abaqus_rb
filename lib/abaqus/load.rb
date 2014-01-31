@@ -65,6 +65,9 @@ unless defined?(ABAQUS_LOAD_RB)
       def self.[](eid)
         @@all[eid]
       end
+      def self.clear
+        @@all.clear
+      end
 
       def self.parse(head,body)
         key, opts = parse_command(head)
@@ -163,6 +166,19 @@ if $0 == __FILE__
       assert p2, "p2"
       assert_equal [dof], p1.dofs
       assert_equal [dof+1], p2.dofs
+    end
+  end
+  class TestDLoad < Test::Unit::TestCase
+    def teardown
+      Abaqus::DLoad.clear
+    end
+    def test_new_pressure
+      eid = 7
+      type = "P"
+      values = [0.0, 1.0, 0.0]
+
+      dl = Abaqus::DLoad.new(eid, type, *values)
+      assert_equal dl, Abaqus::DLoad[0]
     end
   end
 end
