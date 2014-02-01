@@ -7,8 +7,8 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.0
-    product_version_number: 1.5.0.0
+    file_version_number   : 1.5.0.1
+    product_version_number: 1.5.0.1
     comments              : 結果のないデータの出力抑止
     company_name          : NSC
     legal_copyright       : Tanabe
