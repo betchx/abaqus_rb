@@ -38,7 +38,7 @@ task :doc do
   sh "rdoc -x test -x setup.rb"
 end
 
-
+desc "Create dat_extract.exe"
 task :dat_extract do
   sh "ruby -I lib -r exerb/mkexy  dat_extract.rb"
   File.rename("dat_extract.exy","dat_extract.file")
