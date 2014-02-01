@@ -221,12 +221,16 @@ ARGV.each do |file|
       line = f.gets
       out[:time] << t
       if line =~/ALL VALUES IN THIS TABLE ARE ZERO/
-        out[:data][[h,nid]] << 0.0
+        heads.each do |h|
+          out[:data].each do |k,nid|
+            out[:data][[h,nid]] << 0.0 if k == h
+          end
+        end
       else
         res = {}
         begin
           nid, *values  = line.split
-          heads.each_with_indox do |h,i|
+          heads.each_with_index do |h,i|
             out[:data][[h,nid]] << values[i]
           end
         end until (line = f.gets.strip).empty?
