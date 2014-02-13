@@ -139,7 +139,7 @@ ARGV.each do |file|
         outs[name] = out
       end
       1.times{f.gets}
-      out[:time] << t
+      out[:time][inc-1] = t
       line = f.skip
       case point
       when :integ, :elnode
@@ -219,7 +219,7 @@ ARGV.each do |file|
       end
       2.times{f.gets}
       line = f.gets
-      out[:time] << t
+      out[:time] << t unless (out[:time].last - t).abs < (0.01 * t / inc)
       if line =~/ALL VALUES IN THIS TABLE ARE ZERO/
         heads.each do |h|
           out[:data].each do |k,nid|
