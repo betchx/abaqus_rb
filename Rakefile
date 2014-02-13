@@ -54,3 +54,17 @@ task :dat_extract do
   end
   sh "exerb -c cui dat_extract.exy"
 end
+
+desc "Create versioned dat_extract.exe"
+task :dat_extract_ver => :dat_extract do
+  version = ""
+  open('dat_extract.inc','rb') do |f|
+    while line = f.gets
+      if line =~/product_version_number/
+        version = line.split(/:/,2).pop.strip
+        break
+      end
+    end
+  end
+  sh "cp dat_extract.exe dat_extract_v#{version}.exe"
+end
