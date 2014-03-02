@@ -95,6 +95,7 @@ ARGV.each do |file|
     else
       t = line.split.pop.to_f
     end
+    
 
     $stderr.print sprintf("\rinc %5d  time: %g", inc, t)
 
@@ -201,7 +202,7 @@ ARGV.each do |file|
       line = f.skip
       heads = line.strip.split[2..-1]
       unless out
-        out = {:name=>name, :time => ["time"], :heads => {}, :data => {}}
+        out = {:name=>name, :time => [t], :heads => {}, :data => {}}
         outs[name] = out
         if model.nsets[name]
           nodes[name] = model.nsets[name].sort
