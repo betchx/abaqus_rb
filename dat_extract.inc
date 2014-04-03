@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.8
-    product_version_number: 1.5.0.8
-    comments              : 断面力等SectionPointの無い場合と脚注付きの場合に対応 (r8)
+    file_version_number   : 1.5.0.9
+    product_version_number: 1.5.0.9
+    comments              : 節点座標出力機能追加 (r9)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe

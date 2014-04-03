@@ -10,10 +10,14 @@ require 'optparse'
 require 'abaqus'
 
 $quiet = false
+$node_pos = false
 
 OptionParser.new do |opt|
   opt.on('-q', '--quiet', "Skip Conformation"){
     $quiet = true
+  }
+  opt.on('-p', '--pos', "Add position(Coordinate) of node will be written as step 0"){
+    $node_pos = true
   }
 
   opt.parse!(ARGV)
@@ -257,14 +261,15 @@ ARGV.each do |file|
       outs[name] = [] if outs[name].nil?
       out = outs[name][$step]
       if out.nil?
+        prt = nil
         if model.nsets[name]
           nodes[name] = model.nsets[name].sort
         elsif model.steps[$step-1].nsets[name]
           nodes[name] = model.steps[$step-1].nsets[name].sort
         elsif name =~ /ASSEMBLY_\w+_\w+/
           # need split
-          as,pt,gn = name.split(/_/)
-          nodes[name] = model.parts[pt].nsets[gn].sort
+          as,prt,gn = name.split(/_/)
+          nodes[name] = model.parts[prt].nsets[gn].sort
         else
           raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
         end
@@ -277,6 +282,22 @@ ARGV.each do |file|
           end
         end
         outs[name][$step] = out
+        if $step == 1 && $node_pos
+          # make result by coordinate of nodes
+          pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :nodes => nodes[name]}
+          nodes[name].each do |nid|
+            heads.each do |h|
+              key = [h,nid.to_s]
+              if prt
+                nd = model.parts[prt].nodes[nid]
+              else
+                nd = model.nodes[nid]
+              end
+              pos[:data][key] = [nd.x, nd.y, nd.z]
+            end
+          end
+          outs[name][0] = pos
+        end
       end
       2.times{f.gets}
       line = f.gets
@@ -325,8 +346,8 @@ ARGV.each do |file|
         out.print ",#{set[:heads][key]}"
       end
       out.puts
-      1.upto($step) do |step|
-        set = sets[step]
+      0.upto($step) do |step|
+        set = sets[step] or next
         data = set[:data]
         set[:time].each_with_index do |t,i|
           out.print [set[:step],t].join(",")
