@@ -14,11 +14,10 @@ class File
     begin
       wk = self.gets
       return nil unless wk
+      redo if wk =~ /OR: \*ORIENTATION USED FOR THIS ELEMENT/
       $step += 1 if wk =~ /  S T E P  /
     end while wk.strip.empty?
-    #$stderr.puts "File::Next '#{wk}'"
     return wk.strip
-
   end
 end
 
@@ -109,8 +108,6 @@ ARGV.each do |file|
       break if line =~ INC
       break if line =~ FIN
       break if line =~ FIN2
-      next if line =~ /OR: \*ORIENTATION USED FOR THIS ELEMENT/
-      next if line.strip.empty?
 
       #$stderr.puts "line : '#{line}'"
       raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
