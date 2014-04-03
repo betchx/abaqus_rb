@@ -6,8 +6,18 @@ FIN = /THE ANALYSIS HAS BEEN COMPLETED/;
 FIN2 = /ANALYSIS COMPLETE/;
 
 require 'pp'
-
+require 'optparse'
 require 'abaqus'
+
+$quiet = false
+
+OptionParser.new do |opt|
+  opt.on('-q', '--quiet', "Skip Conformation"){
+    $quiet = true
+  }
+
+  opt.parse!(ARGV)
+end
 
 class File
   def skip
@@ -295,7 +305,8 @@ ARGV.each do |file|
 
 end # ARGV
 
-
-$stderr.puts "Finished.  Press Enter to exit"
-$stdin.gets
+unless $quiet
+  $stderr.puts "Finished.  Press Enter to exit"
+  $stdin.gets
+end
 

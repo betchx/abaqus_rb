@@ -40,7 +40,7 @@ end
 
 desc "Create dat_extract.exe"
 task :dat_extract do
-  sh "ruby -I lib -r exerb/mkexy  dat_extract.rb"
+  sh "ruby -I lib -r exerb/mkexy  dat_extract.rb -q"
   File.rename("dat_extract.exy","dat_extract.file")
   open("dat_extract.exy","ab") do |out|
     out.print open("dat_extract.inc","rb").read.gsub(/RUBY_VERSION/,`ruby -v`.chomp)
