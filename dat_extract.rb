@@ -208,13 +208,19 @@ ARGV.each do |file|
           nodes[name] = model.nsets[name].sort
         elsif model.steps[$step-1].nsets[name]
           nodes[name] = model.steps[$step-1].nsets[name].sort
+        elsif name =~ /ASSEMBLY_\w+_\w+/
+          # need split
+          as,pt,gn = name.split(/_/)
+          p as, pt, gn
+          nodes[name] = model.parts[pt].nsets[gn]
+          p nodes[name]
         else
-          raise "Node set '#{name}' does not found"
+          raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
         end
         nodes[name].each do |nid|
           heads.each do |h|
             out[:heads][[h,nid]] = ",#{h}@#{nid}"
-            out[:data][[h,nid]] = []
+            out[:data][[h,nid.to_s]] = []
           end
         end
       end
