@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.7
-    product_version_number: 1.5.0.7
-    comments              : バッチ処理用に終了確認をスキップ可能に (r7)
+    file_version_number   : 1.5.0.8
+    product_version_number: 1.5.0.8
+    comments              : 断面力等SectionPointの無い場合と脚注付きの場合に対応 (r8)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe

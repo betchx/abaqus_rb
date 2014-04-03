@@ -27,7 +27,7 @@ class File
       redo if wk =~ /OR: \*ORIENTATION USED FOR THIS ELEMENT/
       $step += 1 if wk =~ /  S T E P  /
     end while wk.strip.empty?
-    return wk.strip
+    return wk
   end
 end
 
@@ -150,30 +150,56 @@ ARGV.each do |file|
       else
         raise "Not supported output type for elset #{elname}"
       end
-      heads = f.skip.split(/-/,2).pop.strip.split.map{|x| x.strip}
-
-      out = outs[name]
+      info,head = f.skip.split(/-/,2)
+      sz = info.size
+      heads = head.strip.split.map{|x| x.strip}
+      with_sec = info =~ /SEC/
+      outs[name] = [] if outs[name].nil?
+      out = outs[name][$step]
       if out.nil?
-        out = {:name=>name, :time => [], :heads => {}, :data => {}}
-        outs[name] = out
+        out = {:name=>name, :step => $step, :time => [], :heads => {}, :data => {}}
+        outs[name][$step] = out
       end
       1.times{f.gets}
       out[:time][inc-1] = t
       line = f.skip
       case point
-      when :integ, :elnode
+      when :integ
         unless line =~ /ALL VALUES/
           begin
-            eid, pt, sec, *val = line.strip.split
+            if with_sec
+              eid, pt, sec, *val = line[0..sz].strip.split
+            else
+              sec = nil
+              eid, pt, *val = line.strip.split
+            end
+            val = line[sz..-1].strip.split
             heads.each_with_index do |h,i|
               key = [h,eid,pt,sec]
               if out[:data][key].nil?
                out[:data][key] ||= ["0"] * (inc - 1)
-               if point == :integ
-                 out[:heads][key] = "#{h}@e#{eid}-pt#{pt}-sp#{sec}"
-               else
-                 out[:heads][key] = "#{h}@e#{eid}-n#{n}-sp#{sec}"
-               end
+               out[:heads][key] = "#{h}@e#{eid}-pt#{pt}" + (sec ? "-sp#{sec}" : "")
+              end
+              out[:data][key] << val[i]
+            end
+          end until (line = f.gets.strip).empty?
+          5.times{f.gets}
+        end
+      when :elnode
+        unless line =~ /ALL VALUES/
+          begin
+            if with_sec
+              eid, pt, sec, *val = line.strip.split
+            else
+              sec = nil
+              eid, pt, *val = line.strip.split
+            end
+            val = line[sz..-1].strip.split
+            heads.each_with_index do |h,i|
+              key = [h,eid,pt,sec]
+              if out[:data][key].nil?
+               out[:data][key] ||= ["0"] * (inc - 1)
+               out[:heads][key] = "#{h}@e#{eid}-n#{pt}" + (sec ? "-sp#{sec}" : "")
               end
               out[:data][key] << val[i]
             end
@@ -183,12 +209,18 @@ ARGV.each do |file|
       when :center
         unless line =~ /ALL VALUES/
           begin
-            eid, sec, *val = line.split
+            if with_sec
+              eid, sec, *val = line.split
+            else
+              sec = nil
+              eid, *val = line.split
+            end
+            val = line[sz..-1].strip.split
             heads.each_with_index do |h,i|
               key = [h,eid,sec]
               if out[:data][key].nil?
                 out[:data][key] = ["0"] * (inc - 1)
-                out[:heads][key] = "#{h}@e#{eid}-sp#{sec}"
+                out[:heads][key] = "#{h}@e#{eid}" + (sec ? "-sp#{sec}" : "")
               end
               out[:data][key] << val[i]
             end
@@ -217,15 +249,14 @@ ARGV.each do |file|
         wk = f.gets.strip
       end until wk.empty?
       raise if name =~ / /;
-
       break if name == "subsidiary."  # begining of step
 
-      out = outs[name]
       line = f.skip
-      heads = line.strip.split[2..-1]
-      unless out
-        out = {:name=>name, :time => [t], :heads => {}, :data => {}}
-        outs[name] = out
+      heads = line.split(/-/,2).pop.split.map{|x| x.strip}
+
+      outs[name] = [] if outs[name].nil?
+      out = outs[name][$step]
+      if out.nil?
         if model.nsets[name]
           nodes[name] = model.nsets[name].sort
         elsif model.steps[$step-1].nsets[name]
@@ -233,16 +264,19 @@ ARGV.each do |file|
         elsif name =~ /ASSEMBLY_\w+_\w+/
           # need split
           as,pt,gn = name.split(/_/)
-          nodes[name] = model.parts[pt].nsets[gn]
+          nodes[name] = model.parts[pt].nsets[gn].sort
         else
           raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
         end
+        out = {:name=>name, :step => $step, :time => [t], :heads => {}, :data => {}, :nodes => nodes[name]}
         nodes[name].each do |nid|
           heads.each do |h|
-            out[:heads][[h,nid]] = ",#{h}@#{nid}"
-            out[:data][[h,nid.to_s]] = []
+            key = [h,nid.to_s]
+            out[:heads][key] = "#{h}@#{nid}"
+            out[:data][key] = []
           end
         end
+        outs[name][$step] = out
       end
       2.times{f.gets}
       line = f.gets
@@ -280,23 +314,28 @@ ARGV.each do |file|
   #outs.each do |k,out|
   #  out.close
   #end
-
-  outs.each do |name,set|
+  $stderr.puts
+  outs.each do |name,sets|
+    set = sets.last
     keys = set[:data].keys.sort
 
     open("#{base}/#{name}.csv","w") do |out|
-      out.print "time"
+      out.print "step,time"
       keys.each do |key|
         out.print ",#{set[:heads][key]}"
       end
       out.puts
-
-      set[:time].each_with_index do |t,i|
-        out.print t
-        keys.each do |key|
-          out.print ",#{set[:data][key][i]}"
+      1.upto($step) do |step|
+        set = sets[step]
+        data = set[:data]
+        set[:time].each_with_index do |t,i|
+          out.print [set[:step],t].join(",")
+          keys.each do |key|
+            p key if data[key].nil?
+            out.print ",#{data[key][i]}"
+          end
+          out.puts
         end
-        out.puts
       end
     end
   end # out
