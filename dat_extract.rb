@@ -109,6 +109,9 @@ ARGV.each do |file|
       break if line =~ INC
       break if line =~ FIN
       break if line =~ FIN2
+      next if line =~ /OR: \*ORIENTATION USED FOR THIS ELEMENT/
+      next if line.strip.empty?
+
       #$stderr.puts "line : '#{line}'"
       raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
       elname = line.split.pop
