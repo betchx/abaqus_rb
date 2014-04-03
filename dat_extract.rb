@@ -62,7 +62,7 @@ ARGV.each do |file|
 
   # get model information from input file
   inp = Dir[base + ".inp"].shift # To get actual case of input file
-  $stderr.puts "INP file: #{inp}"
+  $stderr.print "INP file: #{inp}"
   f = open(file)
   model = Abaqus::parse(open(inp))
   outs = {}
@@ -75,17 +75,24 @@ ARGV.each do |file|
   # reset step counter
   $step = 0
 
-  # Skip to first increment
-  begin
-    line = f.gets
-    if line =~ /FIXED TIME INCREMENTS/
-      line = f.gets
-      fixed_inc = line.strip.split.pop.to_f
-    end
-    raise if line.nil?
-  end until line =~ INC
+  line = true
 
   while line
+    # Skip to first increment
+    begin
+      line = f.gets
+      if line =~ /FIXED TIME INCREMENTS/
+        line = f.gets
+        fixed_inc = line.strip.split.pop.to_f
+      end
+      if line =~ /S T E P +(\d)/
+        $step = $1.to_i
+        $stderr.puts "\n:Step #{$step}:"
+      end
+      raise "No increment is found" if line.nil?
+    end until line =~ INC
+
+
     inc = line.scan(INC).flatten[0].to_i
     4.times{ line = f.gets }
 
@@ -101,13 +108,14 @@ ARGV.each do |file|
 
     line = f.skip
     #$stderr.puts "time: #{t}: #{line} @ #{f.lineno}"
-    raise unless line =~ /E L E M E N T   O U T P U T/ ;
+    raise "Element Output does not found in #{file} at #{fileno} "  unless line =~ /E L E M E N T   O U T P U T/ ;
 
     while (line = f.skip)
       break if line =~/N O D E   O U T P U T/;
       break if line =~ INC
       break if line =~ FIN
       break if line =~ FIN2
+      break if line =~ /^1\r?\n?/  # Start of step
 
       #$stderr.puts "line : '#{line}'"
       raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
@@ -192,12 +200,16 @@ ARGV.each do |file|
       break if line =~ INC
       break if line =~ FIN
       break if line =~ FIN2
+      break if line =~ /^1\r?\n?/  # Start of step
       wk = line
       begin
         name = wk.split.pop
         wk = f.gets.strip
       end until wk.empty?
       raise if name =~ / /;
+
+      break if name == "subsidiary."  # begining of step
+
       out = outs[name]
       line = f.skip
       heads = line.strip.split[2..-1]
@@ -211,9 +223,7 @@ ARGV.each do |file|
         elsif name =~ /ASSEMBLY_\w+_\w+/
           # need split
           as,pt,gn = name.split(/_/)
-          p as, pt, gn
           nodes[name] = model.parts[pt].nsets[gn]
-          p nodes[name]
         else
           raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
         end
@@ -238,10 +248,15 @@ ARGV.each do |file|
         begin
           nid, *values  = line.split
           heads.each_with_index do |h,i|
-            out[:data][[h,nid]] << values[i]
+            key = [h,nid]
+            if out[:data][key].nil?
+              pp out[:data]
+              pp key
+            end
+            out[:data][key] << values[i]
           end
         end until (line = f.gets.strip).empty?
-        6.times{f.gets}
+        5.times{f.gets}
       end
     end while line = f.skip
 

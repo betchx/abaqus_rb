@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.5
-    product_version_number: 1.5.0.5
-    comments              : アンダーバーで区切られたセット名に対処 (r5)
+    file_version_number   : 1.5.0.6
+    product_version_number: 1.5.0.6
+    comments              : 複数Stepの解析に対処 (r6)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe
