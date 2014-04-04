@@ -10,14 +10,14 @@ require 'optparse'
 require 'abaqus'
 
 $quiet = false
-$node_pos = false
+$pos_out = false
 
 OptionParser.new do |opt|
   opt.on('-q', '--quiet', "Skip Conformation"){
     $quiet = true
   }
-  opt.on('-p', '--pos', "Add position(Coordinate) of node will be written as step 0"){
-    $node_pos = true
+  opt.on('-p', '--pos', "Add position(Coordinate) of node/element will be written as step 0"){
+    $pos_out = true
   }
 
   opt.parse!(ARGV)
@@ -137,6 +137,10 @@ ARGV.each do |file|
       until (wk = f.gets.strip).empty?
         elname = wk.strip.split.pop
       end
+      if elname =~  /ASSEMBLY_(\w+)_(\w+)/ then
+        partname = $1
+        setname = $2
+      end
       name = elname
       raise "wrong name of '#{elname}' at #{t} line: #{f.lineno}" if elname =~/ /
       point = nil
@@ -167,6 +171,11 @@ ARGV.each do |file|
       1.times{f.gets}
       out[:time][inc-1] = t
       line = f.skip
+      savepos = ($step == 1 && $pos_out)
+      if savepos
+        pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}}
+        outs[name][0] = pos
+      end
       case point
       when :integ
         unless line =~ /ALL VALUES/
@@ -183,6 +192,9 @@ ARGV.each do |file|
               if out[:data][key].nil?
                out[:data][key] ||= ["0"] * (inc - 1)
                out[:heads][key] = "#{h}@e#{eid}-pt#{pt}" + (sec ? "-sp#{sec}" : "")
+                if savepos
+                  pos[:data][key] = model.element_center_pos(eid,partname)
+                end
               end
               out[:data][key] << val[i]
             end
@@ -204,6 +216,9 @@ ARGV.each do |file|
               if out[:data][key].nil?
                out[:data][key] ||= ["0"] * (inc - 1)
                out[:heads][key] = "#{h}@e#{eid}-n#{pt}" + (sec ? "-sp#{sec}" : "")
+                if savepos
+                  pos[:data][key] = model.element_center_pos(eid,partname)
+                end
               end
               out[:data][key] << val[i]
             end
@@ -225,6 +240,9 @@ ARGV.each do |file|
               if out[:data][key].nil?
                 out[:data][key] = ["0"] * (inc - 1)
                 out[:heads][key] = "#{h}@e#{eid}" + (sec ? "-sp#{sec}" : "")
+                if savepos
+                  pos[:data][key] = model.element_center_pos(eid,partname)
+                end
               end
               out[:data][key] << val[i]
             end
@@ -282,7 +300,7 @@ ARGV.each do |file|
           end
         end
         outs[name][$step] = out
-        if $step == 1 && $node_pos
+        if $step == 1 && $pos_out
           # make result by coordinate of nodes
           pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :nodes => nodes[name]}
           nodes[name].each do |nid|

@@ -174,6 +174,36 @@ unless defined?(ABAQUS_MODEL_RB)
           value.expand_to_element self
         end
       end
+
+      # additional methods
+
+      # return coordinate of element center
+      def element_center_pos(eid, part = nil)
+        if part
+          e = parts[part].elements[eid.to_i]
+        else
+          e = elements[eid]
+        end
+        if e.nil?
+          raise ( "Element #{eid}" + (part ? " in #{part}" : "") + " is not found" )
+        end
+        x = 0.0
+        y = 0.0
+        z = 0.0
+        n = 0
+        e.nodes.each do |nid|
+          if part
+            nd = parts[part].nodes[nid]
+          else
+            nd = nodes[nid]
+          end
+          x += nd.x
+          y += nd.y
+          z += nd.z
+          n += 1
+        end
+        return [x / n, y / n, z / n]
+      end
     end
     GlobalModel.bind_all
   end
