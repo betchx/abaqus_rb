@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.9
-    product_version_number: 1.5.0.9
-    comments              : 節点座標出力機能追加 (r9)
+    file_version_number   : 1.5.0.11
+    product_version_number: 1.5.0.11
+    comments              : 行列入れ替えとソートの機能を追加 (r11)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe

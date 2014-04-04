@@ -11,6 +11,8 @@ require 'abaqus'
 
 $quiet = false
 $pos_out = false
+$transpose = false
+$sor_tkey = nil
 
 OptionParser.new do |opt|
   opt.on('-q', '--quiet', "Skip Conformation"){
@@ -18,6 +20,12 @@ OptionParser.new do |opt|
   }
   opt.on('-p', '--pos', "Add position(Coordinate) of node/element will be written as step 0"){
     $pos_out = true
+  }
+  opt.on('-t', '--transpose', "Output results with transpose (Usefull for stress distribution)"){
+    $transpose = true
+  }
+  opt.on('-k key', "--key=key","order will be sorted by the key. key will be x,y,z or i. i is id number. -p option is require for key =x,y or z."){ |k|
+    $sort_key = k
   }
 
   opt.parse!(ARGV)
@@ -165,7 +173,7 @@ ARGV.each do |file|
       outs[name] = [] if outs[name].nil?
       out = outs[name][$step]
       if out.nil?
-        out = {:name=>name, :step => $step, :time => [], :heads => {}, :data => {}}
+        out = {:name=>name, :step => $step, :time => [], :heads => {}, :data => {}, :ids => {}}
         outs[name][$step] = out
       end
       1.times{f.gets}
@@ -173,7 +181,7 @@ ARGV.each do |file|
       line = f.skip
       savepos = ($step == 1 && $pos_out)
       if savepos
-        pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}}
+        pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :ids =>out[:ids]}
         outs[name][0] = pos
       end
       case point
@@ -187,11 +195,15 @@ ARGV.each do |file|
               eid, pt, *val = line.strip.split
             end
             val = line[sz..-1].strip.split
+            unless val.size == heads.size
+              raise "number of headers and vals does not match \nheads:#{heads.inspect}\nval:#{val.inspect}\nline:#{line.inspect}" 
+            end
             heads.each_with_index do |h,i|
               key = [h,eid,pt,sec]
               if out[:data][key].nil?
-               out[:data][key] ||= ["0"] * (inc - 1)
-               out[:heads][key] = "#{h}@e#{eid}-pt#{pt}" + (sec ? "-sp#{sec}" : "")
+                out[:data][key] ||= ["0"] * (inc - 1)
+                out[:heads][key] = "#{h}@e#{eid}-pt#{pt}" + (sec ? "-sp#{sec}" : "")
+                out[:ids][key] = eid
                 if savepos
                   pos[:data][key] = model.element_center_pos(eid,partname)
                 end
@@ -211,11 +223,13 @@ ARGV.each do |file|
               eid, pt, *val = line.strip.split
             end
             val = line[sz..-1].strip.split
+            raise "number of headers and vals does not match \n#{heads}\n#{val}\n" unless val.size == heads.size
             heads.each_with_index do |h,i|
               key = [h,eid,pt,sec]
               if out[:data][key].nil?
-               out[:data][key] ||= ["0"] * (inc - 1)
-               out[:heads][key] = "#{h}@e#{eid}-n#{pt}" + (sec ? "-sp#{sec}" : "")
+                out[:data][key] ||= ["0"] * (inc - 1)
+                out[:heads][key] = "#{h}@e#{eid}-n#{pt}" + (sec ? "-sp#{sec}" : "")
+                out[:ids][key] = eid
                 if savepos
                   pos[:data][key] = model.element_center_pos(eid,partname)
                 end
@@ -235,11 +249,13 @@ ARGV.each do |file|
               eid, *val = line.split
             end
             val = line[sz..-1].strip.split
+            raise "number of headers and vals does not match \n#{heads}\n#{val}\n" unless val.size == heads.size
             heads.each_with_index do |h,i|
               key = [h,eid,sec]
               if out[:data][key].nil?
                 out[:data][key] = ["0"] * (inc - 1)
                 out[:heads][key] = "#{h}@e#{eid}" + (sec ? "-sp#{sec}" : "")
+                out[:ids][key] = eid
                 if savepos
                   pos[:data][key] = model.element_center_pos(eid,partname)
                 end
@@ -291,18 +307,19 @@ ARGV.each do |file|
         else
           raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
         end
-        out = {:name=>name, :step => $step, :time => [t], :heads => {}, :data => {}, :nodes => nodes[name]}
+        out = {:name=>name, :step => $step, :time => [t], :heads => {}, :data => {}, :ids => {}}
         nodes[name].each do |nid|
           heads.each do |h|
             key = [h,nid.to_s]
             out[:heads][key] = "#{h}@#{nid}"
             out[:data][key] = []
+            out[:ids][key] = nid
           end
         end
         outs[name][$step] = out
         if $step == 1 && $pos_out
           # make result by coordinate of nodes
-          pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :nodes => nodes[name]}
+          pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :ids => out[:ids]}
           nodes[name].each do |nid|
             heads.each do |h|
               key = [h,nid.to_s]
@@ -356,9 +373,56 @@ ARGV.each do |file|
   $stderr.puts
   outs.each do |name,sets|
     set = sets.last
-    keys = set[:data].keys.sort
+    keys = set[:data].keys
+    if $sort_key
+      keys = set[:data].keys.sort_by{|key| $sort_key.downcase.split(//).map{|k|
+        case k
+        when "i"
+          set[:ids][key]
+        when "x","y","z"
+          if sets[0].nil?
+            $stderr.puts "Warning:key #{k} is ignored due to missing -p option"
+            ""
+          else
+            sets[0][:data][key]["xyz".index(k)]
+          end
+        when "h","t"
+          key[0]
+        else
+          $stderr.puts "Warning: Unknown key #{k} is ignored"
+          ""
+        end
+      }} # sort_by!
+    else
+      keys = set[:data].keys
+    end
 
     open("#{base}/#{name}.csv","w") do |out|
+     if $transpose
+      out.print "step"
+      0.upto($step) do |step|
+        set = sets[step] or next
+        set[:time].each{out.print ",#{step}"}
+      end
+      out.puts
+
+      out.print "time"
+      0.upto($step) do |step|
+        set = sets[step] or next
+        set[:time].each {|t| out.print ",#{t}" }
+      end
+      out.puts
+
+      keys.each do |key|
+        out.print "#{set[:heads][key]}"
+        0.upto($step) do |step|
+          set = sets[step] or next
+          out.print "," + set[:data][key].join(",")
+        end
+        out.puts
+      end
+     else
+      # not transpose
       out.print "step,time"
       keys.each do |key|
         out.print ",#{set[:heads][key]}"
@@ -376,7 +440,9 @@ ARGV.each do |file|
           out.puts
         end
       end
+     end
     end
+
   end # out
 
   $stderr.puts
