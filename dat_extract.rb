@@ -198,7 +198,7 @@ ARGV.each do |file|
               end
               out[:data][key] << val[i]
             end
-          end until (line = f.gets.strip).empty?
+          end until (line = f.gets).strip.empty?
           5.times{f.gets}
         end
       when :elnode
@@ -222,7 +222,7 @@ ARGV.each do |file|
               end
               out[:data][key] << val[i]
             end
-          end until (line = f.gets.strip).empty?
+          end until (line = f.gets).strip.empty?
           5.times{f.gets}
         end
       when :center
@@ -246,7 +246,7 @@ ARGV.each do |file|
               end
               out[:data][key] << val[i]
             end
-          end until (line = f.gets.strip).empty?
+          end until (line = f.gets).strip.empty?
           5.times{f.gets}
         end
       end
