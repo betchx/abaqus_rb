@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.11
-    product_version_number: 1.5.0.11
-    comments              : 行列入れ替えとソートの機能を追加 (r11)
+    file_version_number   : 1.5.0.12
+    product_version_number: 1.5.0.12
+    comments              : バグ修正とインスタンス対応 (r12)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe
