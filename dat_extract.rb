@@ -13,6 +13,7 @@ $quiet = false
 $pos_out = false
 $transpose = false
 $sor_tkey = nil
+$dbg = false
 
 OptionParser.new do |opt|
   opt.on('-q', '--quiet', "Skip Conformation"){
@@ -26,6 +27,9 @@ OptionParser.new do |opt|
   }
   opt.on('-k key', "--key=key","order will be sorted by the key. key will be x,y,z or i. i is id number. -p option is require for key =x,y or z."){ |k|
     $sort_key = k
+  }
+  opt.on('-D', "--bebug", "Output log massege into debug.log"){
+    $dbg = open("debug_out.log", "w")
   }
 
   opt.parse!(ARGV)
@@ -114,6 +118,7 @@ ARGV.each do |file|
       raise "No increment is found" if line.nil?
     end until line =~ INC
 
+    $dbg.puts "#{__FILE__}:#{__LINE__}:I@#{f.lineno}:#{line}"  if $dbg
 
     inc = line.scan(INC).flatten[0].to_i
     4.times{ line = f.gets }
@@ -284,17 +289,20 @@ ARGV.each do |file|
       wk = line
       begin
         name = wk.split.pop
+        $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:name[#{name}]"  if $dbg
         wk = f.gets.strip
       end until wk.empty?
       raise if name =~ / /;
       break if name == "subsidiary."  # begining of step
 
+      $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  if $dbg
       line = f.skip
       heads = line.split(/-/,2).pop.split.map{|x| x.strip}
 
       outs[name] = [] if outs[name].nil?
       out = outs[name][$step]
       if out.nil?
+        $dbg.puts "#{__FILE__}:#{__LINE__}:O@#{f.lineno}:Initialize outs[#{name}][#{$step}]"  if $dbg
         prt = nil
         if model.nsets[name]
           nodes[name] = model.nsets[name].sort
@@ -307,10 +315,12 @@ ARGV.each do |file|
         else
           raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
         end
+        $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:nodes: #{nodes[name].inspect}"  if $dbg
         out = {:name=>name, :step => $step, :time => [t], :heads => {}, :data => {}, :ids => {}}
         nodes[name].each do |nid|
           heads.each do |h|
             key = [h,nid.to_s]
+            $dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key : #{key.inspect}"  if $dbg
             out[:heads][key] = "#{h}@#{nid}"
             out[:data][key] = []
             out[:ids][key] = nid
@@ -320,6 +330,7 @@ ARGV.each do |file|
         if $step == 1 && $pos_out
           # make result by coordinate of nodes
           pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :ids => out[:ids]}
+          $dbg.puts "#{__FILE__}:#{__LINE__}:P@#{f.lineno}:pos: #{pos.inspect}"  if $dbg
           nodes[name].each do |nid|
             heads.each do |h|
               key = [h,nid.to_s]
@@ -349,9 +360,13 @@ ARGV.each do |file|
           nid, *values  = line.split
           heads.each_with_index do |h,i|
             key = [h,nid]
+            $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:Key: #{key.inspect}"  if $dbg
             if out[:data][key].nil?
-              pp out[:data]
-              pp key
+              $dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:name: #{name.inspect}"  if $dbg
+              $dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:name]: #{out[:name].inspect}"  if $dbg
+              $dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:data]: #{out[:data].inspect}"  if $dbg
+              $dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:key: #{key.inspect}"  if $dbg
+              out[:data][key] = []
             end
             out[:data][key] << values[i]
           end
@@ -373,7 +388,9 @@ ARGV.each do |file|
   $stderr.puts
   outs.each do |name,sets|
     set = sets.last
+    $dbg.puts "#{__FILE__}:#{__LINE__}:---:set : #{set.inspect}"  if $dbg
     keys = set[:data].keys
+    $dbg.puts "#{__FILE__}:#{__LINE__}:---:Keys: #{keys.inspect}"  if $dbg
     if $sort_key
       keys = set[:data].keys.sort_by{|key| $sort_key.downcase.split(//).map{|k|
         case k
