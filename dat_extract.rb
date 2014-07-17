@@ -128,14 +128,9 @@ ARGV.each do |file|
     else
       t = line.split.pop.to_f
     end
-    
+
 
     $stderr.print sprintf("\rinc %5d  time: %g", inc, t)
-
-
-    line = f.skip
-    #$stderr.puts "time: #{t}: #{line} @ #{f.lineno}"
-    raise "Element Output does not found in #{file} at #{fileno} "  unless line =~ /E L E M E N T   O U T P U T/ ;
 
     while (line = f.skip)
       break if line =~/N O D E   O U T P U T/;
@@ -143,6 +138,11 @@ ARGV.each do |file|
       break if line =~ FIN
       break if line =~ FIN2
       break if line =~ /^1\r?\n?/  # Start of step
+
+      # check
+      unless line =~ /E L E M E N T   O U T P U T/ ;
+        raise "Element Output does not found in #{file} at #{f.lineno} "
+      end
 
       #$stderr.puts "line : '#{line}'"
       raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
