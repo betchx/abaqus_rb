@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.13
-    product_version_number: 1.5.0.13
-    comments              : バグ修正(エラー終了対応) (r13)
+    file_version_number   : 1.5.0.14
+    product_version_number: 1.5.0.14
+    comments              : exeで実行時にエラーメッセージを表示してから終了する様に変更 (r14)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe

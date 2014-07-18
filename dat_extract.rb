@@ -1,6 +1,8 @@
 #! /usr/bin/ruby
 # coding: Shift_JIS
 
+begin
+
 INC = /INCREMENT +(\d+) SUMMARY/ ;
 FIN = /THE ANALYSIS HAS BEEN COMPLETED/;
 FIN2 = /ANALYSIS COMPLETE/;
@@ -531,5 +533,20 @@ end # ARGV
 unless $quiet
   $stderr.puts "Finished.  Press Enter to exit"
   $stdin.gets
+end
+
+rescue Exception => e
+  #  trap all exception due to show the error message for users
+  $stderr.puts
+  $stderr.puts
+  $stderr.puts "****ERROR****"
+  $stderr.puts e.message
+  $stderr.puts e.backtrace
+  $stderr.puts "*************"
+  $stderr.puts
+ unless $quiet
+  $stderr.puts "Press Enter to close"
+  $stdin.gets
+ end
 end
 
