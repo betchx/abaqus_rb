@@ -4,6 +4,7 @@
 INC = /INCREMENT +(\d+) SUMMARY/ ;
 FIN = /THE ANALYSIS HAS BEEN COMPLETED/;
 FIN2 = /ANALYSIS COMPLETE/;
+TERM = /PROBLEMS ENCOUNTERED  KILLED/
 
 require 'pp'
 require 'optparse'
@@ -321,6 +322,7 @@ ARGV.each do |file|
     next if line =~ INC
     break if line =~ FIN
     break if line =~ FIN2
+    break if line =~ TERM
     unless line =~ /N O D E/
       $stderr.puts line
     end
@@ -330,6 +332,7 @@ ARGV.each do |file|
       break if line =~ INC
       break if line =~ FIN
       break if line =~ FIN2
+      break if line =~ TERM
       break if line =~ /^1\r?\n?/  # Start of step
       wk = line
       begin
@@ -436,6 +439,7 @@ ARGV.each do |file|
 
     break if line =~ FIN
     break if line =~ FIN2
+    break if line =~ TERM
 
 
   end
