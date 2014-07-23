@@ -1,5 +1,6 @@
 require 'abaqus/element/b31'
 require 'abaqus/element/b33'
+require 'abaqus/element/c3d20'
 require 'abaqus/element/c3d8'
 require 'abaqus/element/dashpot2'
 require 'abaqus/element/mass'
