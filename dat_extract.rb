@@ -362,8 +362,8 @@ ARGV.each do |file|
           nodes[name] = model.steps[$step-1].nsets[name].sort
         elsif name =~ /ASSEMBLY_\w+_\w+/
           # need split
-          as,prt,gn = name.split(/_/)
-          nodes[name] = model.parts[prt].nsets[gn].sort
+          as,ins,gn = name.split(/_/)
+          nodes[name] = model.instances[ins].part.nsets[gn].sort
         elsif name =~ /ASSEMBLY_\w+/
           # need split
           as,gn = name.split(/_/)

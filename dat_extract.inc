@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.14
-    product_version_number: 1.5.0.14
-    comments              : exeで実行時にエラーメッセージを表示してから終了する様に変更 (r14)
+    file_version_number   : 1.5.0.15
+    product_version_number: 1.5.0.15
+    comments              : インスタンス内の節点集合にアクセスできない問題を修正 (r15)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe
