@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.15
-    product_version_number: 1.5.0.15
-    comments              : インスタンス内の節点集合にアクセスできない問題を修正 (r15)
+    file_version_number   : 1.5.0.16
+    product_version_number: 1.5.0.16
+    comments              : GapUni要素に対応 (r16)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe
