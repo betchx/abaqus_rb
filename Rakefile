@@ -5,6 +5,7 @@ TEST_FILES = FileList.new
 ActualElements = 'lib/abaqus/actual_elements.rb'
 SubElements = Dir['lib/abaqus/element/*.rb']
 
+desc "Update element reference"
 task :default => :element
 
 Dir['lib/**/*.rb'].each do |rbfile|
@@ -22,6 +23,9 @@ end
 Rake::TestTask.new("test" => TEST_FILES){|t|
   t.pattern = 'test/**/test_*.rb'
 }
+
+
+desc "Update element reference"
 task :element => ActualElements
 
 file ActualElements => SubElements do |t|
@@ -34,6 +38,7 @@ file ActualElements => SubElements do |t|
   end
 end
 
+desc "run rdoc"
 task :doc do
   sh "rdoc -x test -x setup.rb"
 end
