@@ -61,7 +61,8 @@ module Abaqus
         keyword, ops = Inp.parse_command(line)
         #check include
         if keyword =~ /\*INCLUDE/i
-          fname = ops['INPUT']
+          #fname = ops['INPUT']
+          fname = line.strip.scan(/input=(.*)/i)[0][0]
           iostack.push f
           $stderr.puts "Including #{fname} in model definition."
           f = open(fname)
@@ -342,7 +343,7 @@ neg.1
     def open_data
       f = open(__FILE__) #File::dirname(__FILE__)+'/../lib/abaqus.rb')
       while line = f.gets
-	break if line =~ /^__END__/
+        break if line =~ /^__END__/
       end
       f
     end
@@ -389,12 +390,12 @@ __END__
 **
 *Part, name=Stringers
 *End Part
-**  
+**
 **
 ** ASSEMBLY
 **
 *Assembly, name=Assembly
-**  
+**
 *Instance, name=Stringers-1, part=Stringers
 *Node
       1,          25.,    2.8499999,  0.790000021
@@ -2019,7 +2020,7 @@ __END__
 0.25, 0.2
 1.,0.,0.
 *End Instance
-**  
+**
 *MPC
 BEAM, Stringers-1.256, Stringers-1.170
 BEAM, Stringers-1.260, Stringers-1.168
@@ -2234,9 +2235,9 @@ BEAM, Stringers-1.176, Stringers-1.132
 *Elset, elset=RailB, instance=Stringers-1, generate
   1,  80,   1
 *End Assembly
-** 
+**
 ** MATERIALS
-** 
+**
 *Material, name=FRP
 *Density
  7.4,
