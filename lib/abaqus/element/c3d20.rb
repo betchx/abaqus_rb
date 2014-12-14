@@ -45,7 +45,7 @@ module Abaqus
       def self.parse(line,io)
         self.new(*parse_line(line,io))
       end
-      Element::BasicElementMap << [/^C3D8/,self]
+      Element::BasicElementMap << [/^C3D20/,self]
     end
   end
 end
