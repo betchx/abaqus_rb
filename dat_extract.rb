@@ -99,6 +99,7 @@ ARGV.each do |file|
   outs = {}
   nodes = {}
   fixed_inc = false
+  t = 0.0
 
   # Create output directory
   Dir::mkdir(base) unless FileTest::directory?(base)
@@ -157,16 +158,17 @@ ARGV.each do |file|
     $dbg.puts "#{__FILE__}:#{__LINE__}:I@#{f.lineno}:#{line}"  if $dbg
 
     inc = line.scan(INC).flatten[0].to_i
-    4.times{ line = f.gets }
-
+    3.times{ line = f.gets }
     if fixed_inc
       t = fixed_inc * inc
     else
-      t = line.split.pop.to_f
+      dt = line.strip.split[3].to_f
+      t += dt #line.split.pop.to_f
     end
-
-
+    line =f.gets
     $stderr.print sprintf("\rinc %5d  time: %g", inc, t)
+
+
 
     while (line = f.skip)
       break if line =~/N O D E   O U T P U T/;

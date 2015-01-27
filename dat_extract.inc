@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.16
-    product_version_number: 1.5.0.16
-    comments              : GapUni要素に対応 (r16)
+    file_version_number   : 1.5.0.17
+    product_version_number: 1.5.0.17
+    comments              : 固定されていない時間増分に対処(r17)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe
