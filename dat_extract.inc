@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.0.17
-    product_version_number: 1.5.0.17
-    comments              : 固定されていない時間増分に対処(r17)
+    file_version_number   : 1.5.0.18
+    product_version_number: 1.5.0.18
+    comments              : 要素のパース時エラーへの対応(r18)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe

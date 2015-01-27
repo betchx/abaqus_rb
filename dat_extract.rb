@@ -8,17 +8,19 @@ FIN = /THE ANALYSIS HAS BEEN COMPLETED/;
 FIN2 = /ANALYSIS COMPLETE/;
 TERM = /PROBLEMS ENCOUNTERED/
 
+# Require
 require 'pp'
 require 'optparse'
 require 'abaqus'
 
+begin
 $quiet = false
 $pos_out = false
 $transpose = false
 $sor_tkey = nil
 $dbg = false
 $glmap = false
-
+end
 
 OptionParser.new do |opt|
   opt.on('-q', '--quiet', "Skip Conformation"){
@@ -109,6 +111,7 @@ ARGV.each do |file|
 
   line = true
 
+  # Main Loop Start
   while line
     # Skip to first increment
     until line =~ INC
@@ -125,7 +128,7 @@ ARGV.each do |file|
         $step = $1.to_i
         $stderr.puts "\n:Step #{$step}:"
       end
-      # MAP
+      # MAPS of Global-Local Node/Element IDS
       if line =~ /GLOBAL TO LOCAL NODE AND ELEMENT MAPS/
         $glmap = true
         $gn2ln = []
@@ -157,6 +160,7 @@ ARGV.each do |file|
 
     $dbg.puts "#{__FILE__}:#{__LINE__}:I@#{f.lineno}:#{line}"  if $dbg
 
+    # increment
     inc = line.scan(INC).flatten[0].to_i
     3.times{ line = f.gets }
     if fixed_inc
@@ -168,22 +172,27 @@ ARGV.each do |file|
     line =f.gets
     $stderr.print sprintf("\rinc %5d  time: %g", inc, t)
 
+    # Element
 
+    line = f.skip
+    # check
+    unless line =~ /E L E M E N T   O U T P U T/ ;
+      raise "Element Output does not found in #{file} at #{f.lineno} "
+    end
 
     while (line = f.skip)
+      # termination Check
       break if line =~/N O D E   O U T P U T/;
       break if line =~ INC
       break if line =~ FIN
       break if line =~ FIN2
       break if line =~ /^1\r?\n?/  # Start of step
 
-      # check
-      unless line =~ /E L E M E N T   O U T P U T/ ;
-        raise "Element Output does not found in #{file} at #{f.lineno} "
-      end
-
+      # Check
       #$stderr.puts "line : '#{line}'"
       raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
+
+      # Obtain ELSET NAME
       elname = line.split.pop
       until (wk = f.gets.strip).empty?
         elname = wk.strip.split.pop
@@ -194,8 +203,9 @@ ARGV.each do |file|
       end
       name = elname
       raise "wrong name of '#{elname}' at #{t} line: #{f.lineno}" if elname =~/ /
+
+      # Point of Result (Center/Integration Point/Nodes)
       point = nil
-      heads = nil
       case line
       when /AT THE INTEGRATION POINTS/
         name = elname + "-ip"
@@ -209,16 +219,23 @@ ARGV.each do |file|
       else
         raise "Not supported output type for elset #{elname}"
       end
+
+      # Obtain Info
       info,head = f.skip.split(/-/,2)
       sz = info.size
       heads = head.strip.split.map{|x| x.strip}
       with_sec = info =~ /SEC/
+
+      # Prepair Output Array
       outs[name] = [] if outs[name].nil?
       out = outs[name][$step]
       if out.nil?
         out = {:name=>name, :step => $step, :time => [], :heads => {}, :data => {}, :ids => {}, :keys => []}
         outs[name][$step] = out
       end
+
+
+
       1.times{f.gets}
       out[:time][inc-1] = t
       line = f.skip
@@ -227,6 +244,7 @@ ARGV.each do |file|
         pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :ids =>out[:ids]}
         outs[name][0] = pos
       end
+
       case point
       when :integ
         unless line =~ /ALL VALUES/
@@ -323,10 +341,14 @@ ARGV.each do |file|
         end
       end
     end
+
+    #termination check
     next if line =~ INC
     break if line =~ FIN
     break if line =~ FIN2
     break if line =~ TERM
+
+    # Node
     unless line =~ /N O D E/
       $stderr.puts line
     end
@@ -447,6 +469,7 @@ ARGV.each do |file|
 
 
   end
+  # Main Loop End
 
   f.close
 
