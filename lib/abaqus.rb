@@ -38,6 +38,7 @@ module Abaqus
     end
   end
 
+  @@use_dummy = false
 
   module_function
   def parse(f_global,name="default_model", check_heading = false)
@@ -76,6 +77,19 @@ module Abaqus
     end
     return model
   end
+
+  # Dummy class flags
+  def enable_dummy
+    @@use_dummy = true
+  end
+  def disable_dummy
+    @@use_dummy = false
+  end
+
+  def dummy_enabled?
+    @@use_dummy
+  end
+
 end
 
 

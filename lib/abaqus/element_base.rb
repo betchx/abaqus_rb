@@ -110,7 +110,15 @@ unless defined?(ABAQUS_ELEMENT)
       end
 
       def self.obtain_element_class(eltype)
-        @@KnownElements[eltype] || create_new_element_class(eltype)
+        res = @@KnownElements[eltype]
+        if res.nil?
+          if Abaqus.dummy_enabled?
+            res = Abaqus::Element::Dummy
+          else
+            res = create_new_element_class(eltype)
+           end
+        end
+        res
       end
 
       BasicElementMap = []
