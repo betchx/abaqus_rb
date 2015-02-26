@@ -13,6 +13,9 @@ require 'pp'
 require 'optparse'
 require 'abaqus'
 
+# Ignore Unknown Element Type
+Abaqus.enable_dummy
+
 begin
 $quiet = false
 $pos_out = false
