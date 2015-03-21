@@ -96,6 +96,17 @@ ARGV.each do |file|
   dir = File::dirname(file)
   Dir.chdir(dir)
 
+  # Check for Abaqus dat or not.
+  # if it does not abaqus dat, it whill be treat as tab or space separated file.
+  is_abaqus_dat = false
+  open(file,"rb") do |f|
+    2.times{f.gets}
+    if line = f.gets
+      is_abaqus_dat = line =~ /Abaqus \d.\d+(-\d)? *Date \d\d?-...-\d\d\d\d +Time \d\d:\d\d:\d\d/
+    end
+  end
+
+  if is_abaqus_dat
   # get model information from input file
   inp = Dir[base + ".inp"].shift # To get actual case of input file
   $stderr.print "INP file: #{inp}"
@@ -554,6 +565,16 @@ ARGV.each do |file|
 
   end # out
 
+  else # is_abaqus_dat
+    # The input file was assumed as a TSV (Tab Separated Value) or SSV (Space Sparated Value).
+    open(file, "rb") do |f|
+      open(base+".csv", "wb") do |out|
+        while line = f.gets
+          out.puts line.strip.split.join(",")
+        end
+      end
+    end
+  end
   $stderr.puts
 
 end # ARGV
