@@ -190,168 +190,166 @@ ARGV.each do |file|
 
     line = f.skip
     # check
-    unless line =~ /E L E M E N T   O U T P U T/ ;
-      raise "Element Output does not found in #{file} at #{f.lineno} "
-    end
+    if line =~  /E L E M E N T   O U T P U T/
+      while (line = f.skip)
+        # termination Check
+        break if line =~/N O D E   O U T P U T/;
+        break if line =~ INC
+        break if line =~ FIN
+        break if line =~ FIN2
+        break if line =~ /^1\r?\n?/  # Start of step
 
-    while (line = f.skip)
-      # termination Check
-      break if line =~/N O D E   O U T P U T/;
-      break if line =~ INC
-      break if line =~ FIN
-      break if line =~ FIN2
-      break if line =~ /^1\r?\n?/  # Start of step
+        # Check
+        #$stderr.puts "line : '#{line}'"
+        raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
 
-      # Check
-      #$stderr.puts "line : '#{line}'"
-      raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
-
-      # Obtain ELSET NAME
-      elname = line.split.pop
-      until (wk = f.gets.strip).empty?
-        elname = wk.strip.split.pop
-      end
-      if elname =~  /ASSEMBLY_(\w+)_(\w+)/ then
-        partname = $1
-        setname = $2
-      end
-      name = elname
-      raise "wrong name of '#{elname}' at #{t} line: #{f.lineno}" if elname =~/ /
-
-      # Point of Result (Center/Integration Point/Nodes)
-      point = nil
-      case line
-      when /AT THE INTEGRATION POINTS/
-        name = elname + "-ip"
-        point = :integ
-      when /AT THE CENTROID OF THE ELEMENT/
-        name = elname + "-ec"
-        point = :center
-      when /AT THE NODE OF/ # maybe element nodes
-        name = elname + "-en"
-        point = :elnode
-      else
-        raise "Not supported output type for elset #{elname}"
-      end
-
-      # Obtain Info
-      info,head = f.skip.split(/-/,2)
-      sz = info.size
-      heads = head.strip.split.map{|x| x.strip}
-      with_sec = info =~ /SEC/
-
-      # Prepair Output Array
-      outs[name] = [] if outs[name].nil?
-      out = outs[name][$step]
-      if out.nil?
-        out = {:name=>name, :step => $step, :time => [], :heads => {}, :data => {}, :ids => {}, :keys => []}
-        outs[name][$step] = out
-      end
-
-
-
-      1.times{f.gets}
-      out[:time][inc-1] = t
-      line = f.skip
-      savepos = ($step == 1 && $pos_out)
-      if savepos
-        pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :ids =>out[:ids]}
-        outs[name][0] = pos
-      end
-
-      case point
-      when :integ
-        unless line =~ /ALL VALUES/
-          begin
-            if with_sec
-              eid, pt, sec, *val = line[0..sz].strip.split
-            else
-              sec = nil
-              eid, pt, *val = line.strip.split
-            end
-            val = line[sz..-1].strip.split
-            unless val.size == heads.size
-              raise "number of headers and vals does not match \nheads:#{heads.inspect}\nval:#{val.inspect}\nline:#{line.inspect}"
-            end
-            heads.each_with_index do |h,i|
-              key = [h,eid,pt,sec]
-              if out[:data][key].nil?
-                out[:keys] << key
-                out[:data][key] ||= ["0"] * (inc - 1)
-                out[:heads][key] = "#{h}@e#{eid}-pt#{pt}" + (sec ? "-sp#{sec}" : "")
-                out[:ids][key] = eid
-                if savepos
-                  pos[:data][key] = model.element_center_pos(eid,partname)
-                end
-                if $glmap
-                  key2 = [h, $le2ge[eid], pt, sec]
-                  [:data, :heads, :ids].each{|x| out[x][key2] = out[x][key]}
-                end
-              end
-              out[:data][key] << val[i]
-            end
-          end until (line = f.gets).strip.empty?
-          5.times{f.gets}
+        # Obtain ELSET NAME
+        elname = line.split.pop
+        until (wk = f.gets.strip).empty?
+          elname = wk.strip.split.pop
         end
-      when :elnode
-        unless line =~ /ALL VALUES/
-          begin
-            if with_sec
-              eid, pt, sec, *val = line.strip.split
-            else
-              sec = nil
-              eid, pt, *val = line.strip.split
-            end
-            val = line[sz..-1].strip.split
-            raise "number of headers and vals does not match \n#{heads}\n#{val}\n" unless val.size == heads.size
-            heads.each_with_index do |h,i|
-              key = [h,eid,pt,sec]
-              if out[:data][key].nil?
-                out[:data][key] ||= ["0"] * (inc - 1)
-                out[:heads][key] = "#{h}@e#{eid}-n#{pt}" + (sec ? "-sp#{sec}" : "")
-                out[:ids][key] = eid
-                if savepos
-                  pos[:data][key] = model.element_center_pos(eid,partname)
-                end
-                if $glmap
-                  key2 = [h, $le2ge[eid], pt, sec]
-                  [:data, :heads, :ids].each{|x| out[x][key2] = out[x][key]}
-                end
-              end
-              out[:data][key] << val[i]
-            end
-          end until (line = f.gets).strip.empty?
-          5.times{f.gets}
+        if elname =~  /ASSEMBLY_(\w+)_(\w+)/ then
+          partname = $1
+          setname = $2
         end
-      when :center
-        unless line =~ /ALL VALUES/
-          begin
-            if with_sec
-              eid, sec, *val = line.split
-            else
-              sec = nil
-              eid, *val = line.split
-            end
-            val = line[sz..-1].strip.split
-            raise "number of headers and vals does not match \n#{heads}\n#{val}\n" unless val.size == heads.size
-            heads.each_with_index do |h,i|
-              key = [h,eid,sec]
-              if out[:data][key].nil?
-                out[:data][key] = ["0"] * (inc - 1)
-                out[:heads][key] = "#{h}@e#{eid}" + (sec ? "-sp#{sec}" : "")
-                out[:ids][key] = eid
-                if savepos
-                  pos[:data][key] = model.element_center_pos(eid,partname)
-                end
-                if $glmap
-                  key2 = [h, $le2ge[eid], sec]
-                  [:data, :heads, :ids].each{|x| out[x][key2] = out[x][key]}
-                end
+        name = elname
+        raise "wrong name of '#{elname}' at #{t} line: #{f.lineno}" if elname =~/ /
+
+        # Point of Result (Center/Integration Point/Nodes)
+        point = nil
+        case line
+        when /AT THE INTEGRATION POINTS/
+          name = elname + "-ip"
+          point = :integ
+        when /AT THE CENTROID OF THE ELEMENT/
+          name = elname + "-ec"
+          point = :center
+        when /AT THE NODE OF/ # maybe element nodes
+          name = elname + "-en"
+          point = :elnode
+        else
+          raise "Not supported output type for elset #{elname}"
+        end
+
+        # Obtain Info
+        info,head = f.skip.split(/-/,2)
+        sz = info.size
+        heads = head.strip.split.map{|x| x.strip}
+        with_sec = info =~ /SEC/
+
+        # Prepair Output Array
+        outs[name] = [] if outs[name].nil?
+        out = outs[name][$step]
+        if out.nil?
+          out = {:name=>name, :step => $step, :time => [], :heads => {}, :data => {}, :ids => {}, :keys => []}
+          outs[name][$step] = out
+        end
+
+
+
+        1.times{f.gets}
+        out[:time][inc-1] = t
+        line = f.skip
+        savepos = ($step == 1 && $pos_out)
+        if savepos
+          pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :ids =>out[:ids]}
+          outs[name][0] = pos
+        end
+
+        case point
+        when :integ
+          unless line =~ /ALL VALUES/
+            begin
+              if with_sec
+                eid, pt, sec, *val = line[0..sz].strip.split
+              else
+                sec = nil
+                eid, pt, *val = line.strip.split
               end
-              out[:data][key] << val[i]
-            end
-          end until (line = f.gets).strip.empty?
-          5.times{f.gets}
+              val = line[sz..-1].strip.split
+              unless val.size == heads.size
+                raise "number of headers and vals does not match \nheads:#{heads.inspect}\nval:#{val.inspect}\nline:#{line.inspect}"
+              end
+              heads.each_with_index do |h,i|
+                key = [h,eid,pt,sec]
+                if out[:data][key].nil?
+                  out[:keys] << key
+                  out[:data][key] ||= ["0"] * (inc - 1)
+                  out[:heads][key] = "#{h}@e#{eid}-pt#{pt}" + (sec ? "-sp#{sec}" : "")
+                  out[:ids][key] = eid
+                  if savepos
+                    pos[:data][key] = model.element_center_pos(eid,partname)
+                  end
+                  if $glmap
+                    key2 = [h, $le2ge[eid], pt, sec]
+                    [:data, :heads, :ids].each{|x| out[x][key2] = out[x][key]}
+                  end
+                end
+                out[:data][key] << val[i]
+              end
+            end until (line = f.gets).strip.empty?
+            5.times{f.gets}
+          end
+        when :elnode
+          unless line =~ /ALL VALUES/
+            begin
+              if with_sec
+                eid, pt, sec, *val = line.strip.split
+              else
+                sec = nil
+                eid, pt, *val = line.strip.split
+              end
+              val = line[sz..-1].strip.split
+              raise "number of headers and vals does not match \n#{heads}\n#{val}\n" unless val.size == heads.size
+              heads.each_with_index do |h,i|
+                key = [h,eid,pt,sec]
+                if out[:data][key].nil?
+                  out[:data][key] ||= ["0"] * (inc - 1)
+                  out[:heads][key] = "#{h}@e#{eid}-n#{pt}" + (sec ? "-sp#{sec}" : "")
+                  out[:ids][key] = eid
+                  if savepos
+                    pos[:data][key] = model.element_center_pos(eid,partname)
+                  end
+                  if $glmap
+                    key2 = [h, $le2ge[eid], pt, sec]
+                    [:data, :heads, :ids].each{|x| out[x][key2] = out[x][key]}
+                  end
+                end
+                out[:data][key] << val[i]
+              end
+            end until (line = f.gets).strip.empty?
+            5.times{f.gets}
+          end
+        when :center
+          unless line =~ /ALL VALUES/
+            begin
+              if with_sec
+                eid, sec, *val = line.split
+              else
+                sec = nil
+                eid, *val = line.split
+              end
+              val = line[sz..-1].strip.split
+              raise "number of headers and vals does not match \n#{heads}\n#{val}\n" unless val.size == heads.size
+              heads.each_with_index do |h,i|
+                key = [h,eid,sec]
+                if out[:data][key].nil?
+                  out[:data][key] = ["0"] * (inc - 1)
+                  out[:heads][key] = "#{h}@e#{eid}" + (sec ? "-sp#{sec}" : "")
+                  out[:ids][key] = eid
+                  if savepos
+                    pos[:data][key] = model.element_center_pos(eid,partname)
+                  end
+                  if $glmap
+                    key2 = [h, $le2ge[eid], sec]
+                    [:data, :heads, :ids].each{|x| out[x][key2] = out[x][key]}
+                  end
+                end
+                out[:data][key] << val[i]
+              end
+            end until (line = f.gets).strip.empty?
+            5.times{f.gets}
+          end
         end
       end
     end

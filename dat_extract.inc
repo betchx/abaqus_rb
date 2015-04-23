@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.2.1
-    product_version_number: 1.5.2.1
-    comments              : Abaqus以外のDAT(EXCEL, COM3D等)に対応させた．
+    file_version_number   : 1.5.2.2
+    product_version_number: 1.5.2.2
+    comments              : NODE PRINTのみの場合に対応．
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe
