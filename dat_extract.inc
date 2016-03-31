@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.2.2
-    product_version_number: 1.5.2.2
-    comments              : NODE PRINTのみの場合に対応．
+    file_version_number   : 1.5.2.3
+    product_version_number: 1.5.2.3
+    comments              : バグの修正(abaqus dat誤判定，集合のパースエラー)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe
