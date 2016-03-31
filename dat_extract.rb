@@ -88,6 +88,17 @@ end
 
 dumper = ErrorDumper.new("#{File::basename($0,'.rb')}.err")
 
+# Check for Abaqus dat or not.
+def is_abaqus_dat(file)
+  open(file,"rb") do |f|
+    2.times{f.gets}
+    if line = f.gets
+      return line =~ /Abaqus \d.\d+(-\d)? *Date \d\d?-(...|\d+)-\d\d\d\d +Time \d\d:\d\d:\d\d/
+    end
+  end
+  false
+end
+
 
 
 ARGV.each do |file|
@@ -98,15 +109,7 @@ ARGV.each do |file|
 
   # Check for Abaqus dat or not.
   # if it does not abaqus dat, it whill be treat as tab or space separated file.
-  is_abaqus_dat = false
-  open(file,"rb") do |f|
-    2.times{f.gets}
-    if line = f.gets
-      is_abaqus_dat = line =~ /Abaqus \d.\d+(-\d)? *Date \d\d?-...-\d\d\d\d +Time \d\d:\d\d:\d\d/
-    end
-  end
-
-  if is_abaqus_dat
+  if is_abaqus_dat(file)
   # get model information from input file
   inp = Dir[base + ".inp"].shift # To get actual case of input file
   $stderr.print "INP file: #{inp}"
