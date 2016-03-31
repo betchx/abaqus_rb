@@ -69,6 +69,8 @@ module Abaqus
           cmd = parse_data(body)do |line|
             if line.strip =~ /^\d+\s*,/
               set << line.chomp(",").split(/,/).map{|x| x.to_i}
+            elsif line.strip =~ /^\d+$/
+              set << line.to_i
             else
               set << line.chomp(",").upcase.split(/,/).map{|x| x.strip}
             end

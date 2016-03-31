@@ -72,8 +72,10 @@ module Abaqus
           end
         else
           line_parser = lambda do |arg|
-            if arg.strip =~ /^\s*\d+\s*,/
+            if arg.strip =~ /^\d+\s*,/
               arg.chomp(",").split(/,/).map{|x| x.to_i}
+            elsif arg.strip =~ /^\d+$/
+              arg.to_i
             else
               arg.chomp(",").upcase.split(/,/).map{|x| x.strip}
             end
