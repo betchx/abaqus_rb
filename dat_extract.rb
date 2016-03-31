@@ -396,6 +396,10 @@ begin
             $dbg.puts "#{__FILE__}:#{__LINE__}:O@#{f.lineno}:Initialize outs[#{name}][#{$step}]"  if $dbg
             prt = nil
             if model.nsets[name]
+              if $dbg
+                $dbg.puts "#{__FILE__}:#{__LINE__}:Contents of model.nsets[#{name}]"
+                $dbg.puts model.nsets[name].pretty_inspect
+              end
               nodes[name] = model.nsets[name].sort
             elsif model.steps[$step-1].nsets[name]
               nodes[name] = model.steps[$step-1].nsets[name].sort
@@ -415,14 +419,14 @@ begin
             nodes[name].each do |nid|
               heads.each do |h|
                 key = [h,nid.to_s]
-                $dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key : #{key.inspect}"  if $dbg
+                #$dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key : #{key.inspect}"  if $dbg
                 out[:keys] << key
                 out[:heads][key] = "#{h}@#{nid}"
                 out[:data][key] = []
                 out[:ids][key] = nid
                 if $glmap
                   key2 = [h, $ln2gn[nid]]
-                  $dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key2: #{key2.inspect}"  if $dbg
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key2: #{key2.inspect}"  if $dbg
                   [:heads, :data, :ids].each{|x| out[x][key2] = out[x][key] }
                 end
               end
@@ -463,12 +467,12 @@ begin
               nid, *values  = line.split
               heads.each_with_index do |h,i|
                 key = [h,nid]
-                $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:Key: #{key.inspect}"  if $dbg
+                #$dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:Key: #{key.inspect}"  if $dbg
                 if out[:data][key].nil?
-                  $dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:name: #{name.inspect}"  if $dbg
-                  $dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:name]: #{out[:name].inspect}"  if $dbg
-                  $dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:data]: #{out[:data].inspect}"  if $dbg
-                  $dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:key: #{key.inspect}"  if $dbg
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:name: #{name.inspect}"  if $dbg
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:name]: #{out[:name].inspect}"  if $dbg
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:data]: #{out[:data].inspect}"  if $dbg
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:key: #{key.inspect}"  if $dbg
                   out[:data][key] = []
                 end
                 out[:data][key] << values[i]
