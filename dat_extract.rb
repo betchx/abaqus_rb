@@ -393,8 +393,10 @@ begin
           end
           out = outs[name][$step]
           if out.nil?
+            # create out
             $dbg.puts "#{__FILE__}:#{__LINE__}:O@#{f.lineno}:Initialize outs[#{name}][#{$step}]"  if $dbg
             prt = nil
+            # find nsets
             if model.nsets[name]
               if $dbg
                 $dbg.puts "#{__FILE__}:#{__LINE__}:Contents of model.nsets[#{name}]"
@@ -415,6 +417,7 @@ begin
               raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
             end
             $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:nodes: #{nodes[name].inspect}"  if $dbg
+
             out = {:name=>name, :step => $step, :time => [t], :heads => {}, :data => {}, :ids => {}, :keys => []}
             nodes[name].each do |nid|
               heads.each do |h|
