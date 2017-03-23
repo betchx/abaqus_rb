@@ -182,6 +182,8 @@ begin
         3.times{ line = f.gets }
         if fixed_inc
           t = fixed_inc * inc
+        elsif line =~ /CURRENT LOAD PROPORTIONALITY FACTOR/
+          t = line.strip.split.pop.to_f
         else
           dt = line.strip.split[3].to_f
           t += dt #line.split.pop.to_f
@@ -403,16 +405,19 @@ begin
                 $dbg.puts model.nsets[name].pretty_inspect
               end
               nodes[name] = model.nsets[name].sort
-            elsif model.steps[$step-1].nsets[name]
-              nodes[name] = model.steps[$step-1].nsets[name].sort
-            elsif name =~ /ASSEMBLY_\w+_\w+/
+            elsif name =~ /ASSEMBLY_[-A-Z0-9]+_[-A-Z0-9]+/
               # need split
               as,ins,gn = name.split(/_/)
-              nodes[name] = model.instances[ins].part.nsets[gn].sort
-            elsif name =~ /ASSEMBLY_\w+/
+              nodes[name] = model.instances[ins].part.nsets[gn].sort.map{|x| "#{ins}.#{x}"}
+              #$stderr.puts "Target: #{name}\nType: Nset in part\nIDs: #{nodes[name]}"
+            elsif name =~ /ASSEMBLY_[-A-Z0-9]+/
               # need split
               as,gn = name.split(/_/)
+              raise "#{gn} was not found in assemly" unless model.nsets[gn]
               nodes[name] = model.nsets[gn].sort
+              #$stderr.puts "Target: #{name}\nType: Global Nset\nIDs: #{nodes[name]}"
+            elsif model.steps[$step-1].nsets[name]
+              nodes[name] = model.steps[$step-1].nsets[name].sort
             else
               raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
             end
