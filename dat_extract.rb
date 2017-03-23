@@ -206,7 +206,7 @@ begin
 
             # Check
             #$stderr.puts "line : '#{line}'"
-            raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED AT THE/;
+            raise "#{line} @ #{f.lineno}" unless line =~ /THE FOLLOWING TABLE IS PRINTED (AVERAGED )?AT THE/;
 
             # Obtain ELSET NAME
             elname = line.split.pop
@@ -232,6 +232,9 @@ begin
             when /AT THE NODE OF/ # maybe element nodes
               name = elname + "-en"
               point = :elnode
+            when /AVERAGED AT THE NODES FOR/
+              name = elname + "-an"
+              point = :averaged
             else
               raise "Not supported output type for elset #{elname}"
             end
@@ -309,6 +312,7 @@ begin
                   heads.each_with_index do |h,i|
                     key = [h,eid,pt,sec]
                     if out[:data][key].nil?
+                      out[:keys] << key
                       out[:data][key] ||= ["0"] * (inc - 1)
                       out[:heads][key] = "#{h}@e#{eid}-n#{pt}" + (sec ? "-sp#{sec}" : "")
                       out[:ids][key] = eid
@@ -339,6 +343,7 @@ begin
                   heads.each_with_index do |h,i|
                     key = [h,eid,sec]
                     if out[:data][key].nil?
+                      out[:keys] << key
                       out[:data][key] = ["0"] * (inc - 1)
                       out[:heads][key] = "#{h}@e#{eid}" + (sec ? "-sp#{sec}" : "")
                       out[:ids][key] = eid
@@ -347,6 +352,35 @@ begin
                       end
                       if $glmap
                         key2 = [h, $le2ge[eid], sec]
+                        [:data, :heads, :ids].each{|x| out[x][key2] = out[x][key]}
+                      end
+                    end
+                    out[:data][key] << val[i]
+                  end
+                end until (line = f.gets).strip.empty?
+                5.times{f.gets}
+              end
+            when :averaged
+              unless line =~ /ALL VALUES/
+                begin
+                  if with_sec
+                    nid, sec, *val = line.strip.split
+                  else
+                    sec = nil
+                    nid, *val = line.strip.split
+                  end
+                  val = line[sz..-1].strip.split
+                  raise "number of headers and vals does not match \n#{heads}\n#{val}\n" unless val.size == heads.size
+                  heads.each_with_index do |h,i|
+                    key = [h,nid,sec]
+                    if out[:data][key].nil?
+                      out[:keys] << key
+                      out[:data][key] ||= ["0"] * (inc - 1)
+                      nname = ($glmap)?($gn2ln[nid.to_i]):nid
+                      out[:heads][key] = "#{h}@n#{nname}" + (sec ? "-sp#{sec}" : "")
+                      out[:ids][key] = nid
+                      if $glmap
+                        key2 = [h, $ln2gn[nid], pt, sec]
                         [:data, :heads, :ids].each{|x| out[x][key2] = out[x][key]}
                       end
                     end
