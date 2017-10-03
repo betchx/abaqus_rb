@@ -7,9 +7,9 @@ general:
 
 resource:
   version:
-    file_version_number   : 1.5.4.1
-    product_version_number: 1.5.4.1
-    comments              : RIKS解析の場合に対応させた．(r1 要素節点出力時のエラーを修正)
+    file_version_number   : 1.5.4.2
+    product_version_number: 1.5.4.2
+    comments              : RIKS解析の場合に対応させた．(r2 解析中のdatを処理した場合のエラーに対応)
     company_name          : NSC
     legal_copyright       : Tanabe
     legal_trademarks      : Tanabe

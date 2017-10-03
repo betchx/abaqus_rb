@@ -406,6 +406,7 @@ begin
         line = f.skip
 
         begin
+          break unless line
           break if line =~ INC
           break if line =~ FIN
           break if line =~ FIN2
