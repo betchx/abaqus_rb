@@ -38,7 +38,7 @@ begin
     opt.on('-k key', "--key=key","order will be sorted by the key. key will be x,y,z or i. i is id number. -p option is require for key =x,y or z."){ |k|
       $sort_key = k
     }
-    opt.on('-D', "--bebug", "Output log massege into debug.log"){
+    opt.on('-D', "--debug", "Output log massege into debug.log"){
       $dbg = open("debug_out.log", "w")
     }
 
