@@ -75,7 +75,7 @@ module Abaqus
             if arg.strip =~ /^\d+\s*,/
               arg.chomp(",").split(/,/).map{|x| x.to_i}
             elsif arg.strip =~ /^\d+$/
-              arg.to_i
+              [arg.to_i]
             else
               arg.chomp(",").upcase.split(/,/).map{|x| x.strip}
             end
@@ -84,7 +84,19 @@ module Abaqus
       end
       arr = []
       line = parse_data(body) do |str|
-        arr << line_parser[str]
+        line_parser[str].each do |item|
+          # check: the item is a previously defined nset name or not.
+          case item
+          when Integer
+            arr << item
+          when String
+            if @@all.include?(item)
+              arr << @@all[item]
+            else
+              arr << item
+            end
+          end
+        end
       end
       ns = Nset.new(name)
       ns << arr.flatten.sort_by{|x| x.to_s.split('.').pop.to_i}.uniq
