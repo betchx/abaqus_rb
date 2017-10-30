@@ -406,6 +406,7 @@ begin
         line = f.skip
 
         begin
+          line = f.skip if line =~ / CT: CYLINDRICAL/ # ‹r’‚ª‚ ‚éê‡‚É‘Îˆ
           break unless line
           break if line =~ INC
           break if line =~ FIN
@@ -492,7 +493,7 @@ begin
               end
               outs[name][0] = pos
             end
-          end
+          end # if out.nil?
           2.times{
             line = f.gets
           }
@@ -507,7 +508,7 @@ begin
           else
             res = {}
             begin
-              nid, *values  = line.split
+              nid, *values  = line.sub(/CT/,'').split
               heads.each_with_index do |h,i|
                 key = [h,nid]
                 #$dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:Key: #{key.inspect}"  if $dbg
