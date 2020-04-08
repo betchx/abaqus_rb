@@ -26,7 +26,7 @@ module Abaqus
       "ZASYMM" => [1,2,6],
     }
     def self.parse_label(arg)
-      fix_dof = FIXED_DOF[arg.strip.upcase] or raise ArgumentError,"対応していない境界条件ラベル(#{arg})があります．入力ファイルを確認してください"
+      fix_dof = FIXED_DOF[arg.strip.upcase] or raise ArgumentError,"Unsupported BC label (#{arg}) is found. Plaese check input file"
       fix_dof.map{|x| [x, 0.0]}
     end
     attr_reader :i, :dof, :value, :params, :key
@@ -79,6 +79,5 @@ module Abaqus
     end
   end
 end
-
 
 
