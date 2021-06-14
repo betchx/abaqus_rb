@@ -1,4 +1,4 @@
-
+#coding: utf-8
 dir ="abaqus" # File::dirname(__FILE__)
 require dir + "/inp"
 
@@ -33,8 +33,8 @@ module Abaqus
       return res, prop
     end
 
-    # 各エレメントにプロパティへの参照を追加する．
-    # 処理が重いと思われるので，必要なければ行わない
+    # Add reference for property into each element if nessesary.
+    # (It may be heavy operation)
     def expand_to_element(model = GlobalModel)
       mat = model.materials[@material]
       elset = model.elsets[@name]
@@ -55,8 +55,8 @@ module Abaqus
       end
     end
 
-    # 各エレメントに全プロパティへの参照を追加する．
-    # 処理が重いと思われるので，必要なければ行わない
+    # Add reference for property into each element if nessesary.
+    # (It may be heavy operation)
     def self.expand_to_element
       @@all.each do |key,value|
         value.expand_to_element

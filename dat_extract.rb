@@ -1,5 +1,5 @@
 #! /usr/bin/ruby
-# coding: Shift_JIS
+# coding: utf-8
 
 begin
 
@@ -406,7 +406,7 @@ begin
         line = f.skip
 
         begin
-          line = f.skip if line =~ / CT: CYLINDRICAL/ # ‹r’‚ª‚ ‚éê‡‚É‘Îˆ
+          line = f.skip if line =~ / CT: CYLINDRICAL/ # è„šæ³¨ãŒã‚ã‚‹å ´åˆã«å¯¾å‡¦
           break unless line
           break if line =~ INC
           break if line =~ FIN

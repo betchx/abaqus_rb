@@ -1,17 +1,17 @@
 
-�ėpFEM�\�t�g�E�F�A�ł���ABAQUS�̓��̓t�@�C��(*.inp)���p�[�X���邽�߂̃��C�u�����D
+汎用FEMソフトウェアであるABAQUSの入力ファイル(*.inp)をパースするためのライブラリ．
 
 
-Rakefile�̓��j�b�g�e�X�g�p�D
-�C���X�g�[����setup.rb�ōs���D
-Makefile�͉ߋ��̈╨�D
+Rakefileはユニットテスト用．
+インストールはsetup.rbで行う．
+Makefileは過去の遺物．
 
 
 TODO:
-  *SYSTEM �ւ̑Ή�
+  *SYSTEM への対応
 
-  inp�t�@�C���ւ̏����o��
-  �v�f���C�u�����̒ǉ�
+  inpファイルへの書き出し
+  要素ライブラリの追加
 
 
 
