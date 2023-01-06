@@ -7,3 +7,7 @@ doc/
 dat_extract_v*.exe
 dat_extract.exy
 dat_extract.file
+debug_out.log
+Trail1-500-ssd2.csv
+Trail1-500-ssd2.dat
+Trail1-500-ssd2.inp
