@@ -3,7 +3,7 @@
 
 begin
 
-  INC = /INCREMENT +(\d+) SUMMARY/ ;
+  INC = /^ +INCREMENT ?\w* +(\d+)/ ;
   FIN = /THE ANALYSIS HAS BEEN COMPLETED/;
   FIN2 = /ANALYSIS COMPLETE/;
   TERM = /PROBLEMS ENCOUNTERED/
@@ -16,12 +16,21 @@ begin
   # Ignore Unknown Element Type
   Abaqus.enable_dummy
 
+  class DummyOut
+    def puts(*a)
+    end
+    def print(*a)
+    end
+    def p(*a)
+    end
+  end
+
   begin
     $quiet = false
     $pos_out = false
     $transpose = false
-    $sor_tkey = nil
-    $dbg = false
+    $sort_key = nil
+    $dbg = DummyOut.new
     $glmap = false
   end
 
@@ -90,15 +99,18 @@ begin
 
   # Check for Abaqus dat or not.
   def is_abaqus_dat(file)
+    ans = false
     open(file,"rb") do |f|
       2.times{f.gets}
       if line = f.gets
-        return line =~ /Abaqus \d.\d+(-\d)? *Date \d\d?-(...|\d+)-\d\d\d\d +Time \d\d:\d\d:\d\d/
+        ans =  line =~ /Abaqus (\d.\d+(-\d)?|3DEXPERIENCE R\d+x?) *Date \d\d?-(...|\d+)-\d\d\d\d +Time \d\d:\d\d:\d\d/
+        $dbg.puts "is_abaqus_dat: #{ans}"
+        return ans
       end
     end
-    false
+    $dbg.puts "is_abaqus_dat: #{ans}"
+    ans
   end
-
 
 
   ARGV.each do |file|
@@ -112,7 +124,8 @@ begin
     if is_abaqus_dat(file)
       # get model information from input file
       inp = Dir[base + ".inp"].shift # To get actual case of input file
-      $stderr.print "INP file: #{inp}"
+      $stderr.puts "INP file: #{inp}"
+      $dbg.puts  "INP file: #{inp}"
       f = open(file)
       model = Abaqus::parse(open(inp))
       outs = {}
@@ -137,16 +150,19 @@ begin
 
           # time inc
           if line =~ /FIXED TIME INCREMENTS/
+            $dbg.puts "Fixed time increments"
             line = f.gets
             fixed_inc = line.strip.split.pop.to_f
           end
           # STEP
-          if line =~ /S T E P +(\d)/
+          if line =~ /S T E P +(\d+)/
             $step = $1.to_i
+            $dbg.puts "Step: #{$step}"
             $stderr.puts "\n:Step #{$step}:"
           end
           # MAPS of Global-Local Node/Element IDS
           if line =~ /GLOBAL TO LOCAL NODE AND ELEMENT MAPS/
+            $dbg.puts "Global to local map"
             $glmap = true
             $gn2ln = []
             $ge2le = []
@@ -175,7 +191,7 @@ begin
           end
         end
 
-        $dbg.puts "#{__FILE__}:#{__LINE__}:I@#{f.lineno}:#{line}"  if $dbg
+        $dbg.puts "#{__FILE__}:#{__LINE__}:I@#{f.lineno}:#{line}"
 
         # increment
         inc = line.scan(INC).flatten[0].to_i
@@ -184,6 +200,8 @@ begin
           t = fixed_inc * inc
         elsif line =~ /CURRENT LOAD PROPORTIONALITY FACTOR/
           t = line.strip.split.pop.to_f
+        elsif line =~ /AT FREQUENCY (CYCLES\/TIME) = +(\w+)/
+          t = $1.to_f
         else
           dt = line.strip.split[3].to_f
           t += dt #line.split.pop.to_f
@@ -416,13 +434,13 @@ begin
           wk = line
           begin
             name = wk.split.pop
-            $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:name[#{name}]"  if $dbg
+            $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:name[#{name}] from '#{wk.chomp}'"
             wk = f.gets.strip
           end until wk.empty?
           raise if name =~ / /;
           break if name == "subsidiary."  # begining of step
 
-          $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  if $dbg
+          $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
           line = f.skip
           heads = line.split(/-/,2).pop.split.map{|x| x.strip}
@@ -432,7 +450,7 @@ begin
           out = outs[name][$step]
           if out.nil?
             # create out
-            $dbg.puts "#{__FILE__}:#{__LINE__}:O@#{f.lineno}:Initialize outs[#{name}][#{$step}]"  if $dbg
+            $dbg.puts "#{__FILE__}:#{__LINE__}:O@#{f.lineno}:Initialize outs[#{name}][#{$step}]"
             prt = nil
             # find nsets
             if model.nsets[name]
@@ -457,20 +475,20 @@ begin
             else
               raise "Node set '#{name}' does not found  ( #{file} line #{f.lineno} )"
             end
-            $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:nodes: #{nodes[name].inspect}"  if $dbg
+            $dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:nodes: #{nodes[name].inspect}"
 
             out = {:name=>name, :step => $step, :time => [t], :heads => {}, :data => {}, :ids => {}, :keys => []}
             nodes[name].each do |nid|
               heads.each do |h|
                 key = [h,nid.to_s]
-                #$dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key : #{key.inspect}"  if $dbg
+                #$dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key : #{key.inspect}"
                 out[:keys] << key
                 out[:heads][key] = "#{h}@#{nid}"
                 out[:data][key] = []
                 out[:ids][key] = nid
                 if $glmap
                   key2 = [h, $ln2gn[nid]]
-                  #$dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key2: #{key2.inspect}"  if $dbg
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:K@#{f.lineno}:key2: #{key2.inspect}"
                   [:heads, :data, :ids].each{|x| out[x][key2] = out[x][key] }
                 end
               end
@@ -479,7 +497,7 @@ begin
             if $step == 1 && $pos_out
               # make result by coordinate of nodes
               pos = {:name=>name, :step => "pos", :time => %w(x y z), :heads => out[:heads], :data => {}, :ids => out[:ids]}
-              $dbg.puts "#{__FILE__}:#{__LINE__}:P@#{f.lineno}:pos: #{pos.inspect}"  if $dbg
+              $dbg.puts "#{__FILE__}:#{__LINE__}:P@#{f.lineno}:pos: #{pos.inspect}"
               nodes[name].each do |nid|
                 heads.each do |h|
                   key = [h,nid.to_s]
@@ -500,6 +518,7 @@ begin
           line = f.gets
           out[:time] << t unless (out[:time].last - t).abs < (0.01 * t / inc)
           if line =~/ALL VALUES IN THIS TABLE ARE ZERO/
+            $dbg.puts "#{__FILE__}:#{__LINE__}:Z@#{f.lineno}:ALL ZERO"
             heads.each do |h|
               out[:data].each do |k,nid|
                 out[:data][[h,nid]] << 0.0 if k == h
@@ -511,12 +530,12 @@ begin
               nid, *values  = line.sub(/CT/,'').split
               heads.each_with_index do |h,i|
                 key = [h,nid]
-                #$dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:Key: #{key.inspect}"  if $dbg
+                #$dbg.puts "#{__FILE__}:#{__LINE__}:N@#{f.lineno}:Key: #{key.inspect}"
                 if out[:data][key].nil?
-                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:name: #{name.inspect}"  if $dbg
-                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:name]: #{out[:name].inspect}"  if $dbg
-                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:data]: #{out[:data].inspect}"  if $dbg
-                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:key: #{key.inspect}"  if $dbg
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:name: #{name.inspect}"
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:name]: #{out[:name].inspect}"
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:out[:data]: #{out[:data].inspect}"
+                  #$dbg.puts "#{__FILE__}:#{__LINE__}:X@#{f.lineno}:key: #{key.inspect}"
                   out[:data][key] = []
                 end
                 out[:data][key] << values[i]
@@ -542,9 +561,9 @@ begin
       $stderr.puts
       outs.each do |name,sets|
         set = sets.last
-        $dbg.puts "#{__FILE__}:#{__LINE__}:---:set : #{set.inspect}"  if $dbg
+        $dbg.puts "#{__FILE__}:#{__LINE__}:---:set : #{set.inspect}"
         keys = set[:keys]
-        $dbg.puts "#{__FILE__}:#{__LINE__}:---:Keys: #{keys.inspect}"  if $dbg
+        $dbg.puts "#{__FILE__}:#{__LINE__}:---:Keys: #{keys.inspect}"
         if $sort_key
           keys = set[:keys].sort_by{|key| $sort_key.downcase.split(//).map{|k|
             case k
