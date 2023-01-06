@@ -126,6 +126,14 @@ unless defined?(ABAQUS_MODEL_RB)
         attr var # remove @
        end
       @@all[name] = self
+
+      def to_s
+        "Abaqus::Model:#{@name}"
+      end
+
+      def inspect
+        "#<Abaqus::Model:#{@name} #{@nodes.size} nodes #{@elements.size} elements #{@steps.size} steps>"
+      end
     end
     GlobalModel = Model.new("global")
 
