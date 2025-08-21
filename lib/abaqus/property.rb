@@ -35,14 +35,14 @@ module Abaqus
 
     # Add reference for property into each element if nessesary.
     # (It may be heavy operation)
-    def expand_to_element(model = GlobalModel)
+    def expand_to_element(prt = nil, model = GlobalModel)
       mat = model.materials[@material]
-      elset = model.elsets[@name]
+      elset = (prt || model).elsets[@name]
       if elset.nil?
         raise "Element set with name of #{@name} was not found"
       end
       elset.each do |x|
-        e = model.elements[x]
+        e = (prt || model).elements[x]
         unless e.property.nil?
           prop = e.property
           raise "Multiple Property definition for Element ID #{x} \n" +
